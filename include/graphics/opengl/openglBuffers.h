@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <cstdint>
 
 #include "logger/Logger.h"
 #include "graphics/opengl/opengl.h"
@@ -8,7 +9,7 @@
 
 namespace prism {
 
-enum class GLBufferType {
+enum class GLBufferType : std::uint32_t {
     VERTEX,             // VBO
     ELEMENT_ARRAY,      // EBO
     UNIFORM,            // UBO
@@ -24,7 +25,11 @@ public:
     {
         glCreateBuffers(1, &ID);
         checkGLError("unable to create new buffer");
-        glNamedBufferData(ID, bufferCapacity, nullptr, GL_DYNAMIC_DRAW);
+        if constexpr (B == GLBufferType::UNIFORM || B == GLBufferType::SHADER_STORAGE) {
+            glNamedBufferStorage(ID, bufferCapacity, nullptr, GL_DYNAMIC_STORAGE_BIT);
+        } else {
+            glNamedBufferData(ID, bufferCapacity, nullptr, GL_DYNAMIC_DRAW);
+        }
         checkGLError("unable to allocate capacity to new buffer");
         switch(B) {
             case GLBufferType::UNIFORM:
@@ -42,23 +47,21 @@ public:
     {
         glCreateBuffers(1, &ID);
         checkGLError("unable to create new buffer");
-        glNamedBufferData(ID, bufferCapacity, nullptr, GL_DYNAMIC_DRAW);
+        if constexpr (B == GLBufferType::UNIFORM || B == GLBufferType::SHADER_STORAGE) {
+            glNamedBufferStorage(ID, bufferCapacity, nullptr, GL_DYNAMIC_STORAGE_BIT);
+        } else {
+            glNamedBufferData(ID, bufferCapacity, nullptr, GL_DYNAMIC_DRAW);
+        }
         checkGLError("unable to allocate capacity to new buffer");
         GLenum bufferTarget;
-        switch(B) {
-            default:
-            case GLBufferType::VERTEX: 
-                bufferTarget = GL_ARRAY_BUFFER;
-                break;
-            case GLBufferType::ELEMENT_ARRAY: 
-                bufferTarget = GL_ELEMENT_ARRAY_BUFFER;
-                break;
-            case GLBufferType::UNIFORM: 
-                bufferTarget = GL_UNIFORM_BUFFER;
-                break;
-            case GLBufferType::SHADER_STORAGE: 
-                bufferTarget = GL_SHADER_STORAGE_BUFFER;
-                break;
+        if constexpr (B == GLBufferType::VERTEX) {
+            bufferTarget = GL_ARRAY_BUFFER;
+        } else if (B == GLBufferType::ELEMENT_ARRAY) {
+            bufferTarget = GL_ELEMENT_ARRAY_BUFFER;
+        } else if (B == GLBufferType::UNIFORM) {
+            bufferTarget = GL_UNIFORM_BUFFER;
+        } else {
+            bufferTarget = GL_SHADER_STORAGE_BUFFER;
         }
         glBindBufferRange(bufferTarget, bindingIndex, ID, 0, bufferCapacity);
         checkGLError("unable to set buffer binding index");
@@ -90,6 +93,7 @@ public:
 
     ~OpenGLBuffer() {
         glDeleteBuffers(1, &ID);
+        checkGLError("unable to delete buffer");
     }
 
     GLuint getID() const {
@@ -138,6 +142,11 @@ public:
     }
 
     template<class T>
+    void overwrite(const T &object) {
+        write(std::addressof(object), sizeof(T), 0);
+    }
+
+    template<class T>
     void write(const T &object, std::size_t offset) {
         write(std::addressof(object), sizeof(T), offset);
     }
@@ -148,9 +157,14 @@ public:
     }
 
     template<class T>
+    void overwrite(const T *object, std::size_t size) {
+        write(object, size, 0);
+    }
+
+    template<class T>
     void write(const T *object, std::size_t size, std::size_t offset) {
         if (offset + size > bufferCapacity) {
-            if constexpr (false) {
+            if constexpr (FixedCapacity) {
                 throw Exception("Attempting to write to buffer with insufficient capacity.");
             } 
             // create new buffer with increased capacity
@@ -160,7 +174,11 @@ public:
             GLuint newID{};
             glCreateBuffers(1, &newID);
             checkGLError("unable to create new, larger buffer for write data");
-            glNamedBufferData(newID, newCapacity, nullptr, GL_DYNAMIC_DRAW);
+            if constexpr (B == GLBufferType::UNIFORM || B == GLBufferType::SHADER_STORAGE) {
+                glNamedBufferStorage(newID, newCapacity, nullptr, GL_DYNAMIC_STORAGE_BIT);
+            } else {
+                glNamedBufferData(newID, newCapacity, nullptr, GL_DYNAMIC_DRAW);
+            }
             checkGLError("unable to allocate larger capacity to buffer");
 
             // copy old buffer data into new buffer
@@ -195,7 +213,8 @@ private:
 // define specific buffer types
 using VBO = OpenGLBuffer<GLBufferType::VERTEX, false>;
 using EBO = OpenGLBuffer<GLBufferType::ELEMENT_ARRAY, false>;
-using UBO = OpenGLBuffer<GLBufferType::UNIFORM, false>;
-using SSBO = OpenGLBuffer<GLBufferType::SHADER_STORAGE, false>;
+// UBO and SSBO should have fixed capacities, since they rely on glBufferStorage instead of glBufferData
+using UBO = OpenGLBuffer<GLBufferType::UNIFORM, true>;
+using SSBO = OpenGLBuffer<GLBufferType::SHADER_STORAGE, true>;
 
 }

@@ -115,86 +115,113 @@ inline static VertexDataAttributes getVertexDataAttributes(VertexDataDebug verte
  * this is a container class for vertex objects 
  * 
 */
-class BaseVertexContainer {
+class VertexContainer {
 
 public:
-    BaseVertexContainer(const VertexDataAttributes& vertexAttr) 
+    VertexContainer(const VertexDataAttributes& vertexAttr, std::vector<std::uint8_t>& verticesBytes) 
         : vertexAttr(vertexAttr)
+        , vertexStride(vertexAttr.vertexStride)
+        , verticesBytes(verticesBytes)
+        , numVertices(verticesBytes.size() / vertexAttr.vertexStride)
+        , newVertexOffset(verticesBytes.size())
+        , newVertexI(0)
     {}
 
-    const VertexDataAttributes getVertexDataAttributes() const {
-        return vertexAttr;
+    VertexContainer(const VertexDataAttributes& vertexAttr) 
+        : vertexAttr(vertexAttr)
+        , vertexStride(vertexAttr.vertexStride)
+        , verticesBytes()
+        , numVertices(0)
+        , newVertexOffset(0)
+        , newVertexI(0)
+    {}
+
+
+// sample cast function
+/*
+std::vector<std::uint8_t> cast(pml::DOUBLE value) {
+    std::uint64_t casted = *((std::int64_t*)&value);
+
+    std::vector<std::uint8_t> out;
+
+    for (int i = 0; i < sizeof(value) / sizeof(std::uint8_t); i++) {
+        out.push_back((casted >> 8 * i) & 0xFF);
+    }
+    return out;
+}
+*/
+
+    void addVertex(const void* vertexDataPtr) {/*
+        // cast ptr to unsigned 8 bit int
+        const std::uint8_t* p = static_cast<const std::uint8_t*>(vertexDataPtr);
+        // insert new bytes at end of vector
+        newVertexOffset = verticesBytes.size();
+        newVertexI = 0;
+        numVertices++;
+        verticesBytes.insert(verticesBytes.end(), vertexStride, 0u);
+        // insert data
+        for (int i = 0; i < vertexStride; i++) {
+            verticesBytes[newVertexOffset + newVertexI] = p[i];
+            newVertexI = (newVertexI + 1) % vertexStride;
+        }
+*/
+
+        // endianness
+        // constexpr bool isBigEndian = (std::endian::native == std::endian::big);
+
+        // insert new bytes at end of vector
+        newVertexOffset = verticesBytes.size();
+        newVertexI = 0;
+        numVertices++;
+        verticesBytes.insert(verticesBytes.end(), vertexStride, 0u);
+        // insert data
+        std::uint8_t* casted = (std::uint8_t*)vertexDataPtr;
+        for (int i = 0; i < vertexStride; i++) {
+            verticesBytes[newVertexOffset + newVertexI] = casted[i];
+            newVertexI = (newVertexI + 1) % vertexStride;
+        }
     }
 
-    virtual const void* getVerticesAddress() const = 0;
+    const std::vector<std::uint8_t>& getBytes() const {
+        return verticesBytes;
+    }
 
-    virtual std::size_t getDataSize() const = 0;
+   std::vector<std::uint8_t> getBytesCopy() const {
+        return verticesBytes;
+    }
 
-    virtual std::size_t getNumVertices() const = 0;
+    const void* getVerticesAddress() const {
+        return verticesBytes.data();
+    }
 
-    virtual std::size_t getVertexStride() const = 0;
+    std::size_t getDataSize() const {
+        return sizeof(std::uint8_t) * verticesBytes.size();
+    }
+
+    std::size_t getNumVertices() const {
+        return numVertices;
+    }
+
+    std::size_t getVertexStride() const {
+        return vertexStride;
+    }
+
+    const VertexDataAttributes getVertexAttr() const {
+        return vertexAttr;
+    }
+    
 
 private:
     const VertexDataAttributes vertexAttr;
 
-};
+    std::vector<std::uint8_t> verticesBytes;
+    std::size_t numVertices;
 
-template<class T>
-class VertexContainer : public BaseVertexContainer {
 
-public:
-    VertexContainer(const VertexDataAttributes& vertexAttr, std::vector<T>& vertices) 
-        : BaseVertexContainer(vertexAttr)
-        , vertices(vertices)
-    {}
-
-    VertexContainer(const VertexDataAttributes& vertexAttr) 
-        : BaseVertexContainer(vertexAttr)
-        , vertices()
-    {}
-
-    void addVertex(T& v) {
-        vertices.push_back(v);
-    }
-
-    void insertVertex(T& v, int index) {
-        vertices.insert(vertices.begin() + index, v);
-    }
-
-    const T& at(int index) const {
-        return vertices.at(index);
-    }
-
-    void remove(int index) {
-        vertices.erase(vertices.begin() + index);
-    }
-
-    const std::vector<T>& getVertices() const {
-        return vertices;
-    }
-
-    std::vector<T> getVerticesCopy() const {
-        return vertices;
-    }
-
-    const void* getVerticesAddress() const override {
-        return vertices.data();
-    }
-
-    std::size_t getDataSize() const override {
-        return sizeof(T) * vertices.size();
-    }
-
-    std::size_t getNumVertices() const override {
-        return vertices.size();
-    }
-
-    std::size_t getVertexStride() const override {
-        return sizeof(T);
-    }
-
-private:
-    std::vector<T> vertices;
+    const std::size_t vertexStride;
+    
+    std::size_t newVertexOffset;
+    int newVertexI;
 
 };
 

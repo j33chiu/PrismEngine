@@ -5,19 +5,20 @@
 namespace prism {
 
 
-OpenGLMesh::OpenGLMesh(const BaseVertexContainer& vertices, const std::vector<std::uint32_t>& indices, OpenglVAO* vao) 
-    : vbo(vertices.getVerticesAddress(), vertices.getDataSize())
-    , Mesh(std::move(vertices), indices)
+OpenGLMesh::OpenGLMesh(std::unique_ptr<VertexContainer> vertexContainer, const std::vector<std::uint32_t>& indices, OpenglVAO* vao) 
+    : Mesh(std::move(vertexContainer), indices)
+    , vbo(this->vertexContainer->getVerticesAddress(), this->vertexContainer->getDataSize())
     , ebo(indices.data(), indices.size() * sizeof(std::uint32_t))
     , vao(vao)
 {
-    vao->addVBO(vbo.getID(), 0, static_cast<int>(this->vertices.getVertexStride()));
+    vao->addVBO(vbo.getID(), 0, static_cast<int>(this->vertexContainer->getVertexStride()));
     vao->addEBO(ebo.getID());
 }
 
-void OpenGLMesh::updateVertices(const BaseVertexContainer& newVertices) {
+void OpenGLMesh::updateVertices(std::unique_ptr<VertexContainer> newVertexContainer) {
     // overwrites from beginning of buffer
-    vbo.write(newVertices.getVerticesAddress(), newVertices.getDataSize(), 0);
+    vbo.write(newVertexContainer->getVerticesAddress(), newVertexContainer->getDataSize(), 0);
+    this->vertexContainer = std::move(newVertexContainer);
 }
 
 void OpenGLMesh::updateIndices(const std::vector<std::uint32_t>& newIndices) {
@@ -25,7 +26,7 @@ void OpenGLMesh::updateIndices(const std::vector<std::uint32_t>& newIndices) {
 }
 
 void OpenGLMesh::changeVAO(OpenglVAO* newVAO) {
-    newVAO->addVBO(vbo.getID(), 0, static_cast<int>(vertices.getVertexStride()));
+    newVAO->addVBO(vbo.getID(), 0, static_cast<int>(vertexContainer->getVertexStride()));
     newVAO->addEBO(ebo.getID());
     vao = newVAO;
 }

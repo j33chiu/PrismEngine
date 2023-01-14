@@ -8,9 +8,10 @@ void compileShaderErrors(GLuint shaderID, const char* shaderType) {
     GLint hasCompiled;
 	char infoLog[1024];
 	glGetShaderiv(shaderID, GL_COMPILE_STATUS, &hasCompiled);
+    prism::checkGLError("unable to check shader compile status");
     if (hasCompiled == GL_FALSE) {
         glGetShaderInfoLog(shaderID, 1024, NULL, infoLog);
-
+        prism::checkGLError("unable to check shader log");
         std::stringstream ss;
         ss << "SHADER_COMPILATION_ERROR for: " << shaderType << "\n" << std::endl;
         ss << infoLog << std::endl;

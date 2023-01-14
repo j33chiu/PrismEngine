@@ -47,6 +47,9 @@ private:
     std::vector<std::unique_ptr<OpenglVAO>> vaos;
     std::unordered_map<OpenglVAO*, std::vector<const RenderObject*>> vaoObjectMap;
 
+    const GLuint CAMERA_UBO_BINDING_INDEX = 0u;
+    const GLuint OBJECT_TRANSFORM_SSBO_BINDING_INDEX = 1u;
+
 };
 
 }
