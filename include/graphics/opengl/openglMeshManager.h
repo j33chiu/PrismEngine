@@ -14,7 +14,7 @@ public:
 
 protected:
     std::unique_ptr<Mesh> createUniqueMesh(
-        const BaseVertexContainer& vertexContainer, 
+        std::unique_ptr<VertexContainer> vertexContainer, 
         const std::vector<std::uint32_t>& indices) const override;
 
 };

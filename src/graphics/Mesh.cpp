@@ -2,12 +2,12 @@
 
 namespace prism {
 
-Mesh::Mesh(const BaseVertexContainer& vertices, const std::vector<std::uint32_t>& indices)
-    : vertices(vertices), indices(indices)
+Mesh::Mesh(std::unique_ptr<VertexContainer> vertexContainer, const std::vector<std::uint32_t>& indices)
+    : vertexContainer(std::move(vertexContainer)), indices(indices)
 {}
 
-const BaseVertexContainer& Mesh::getVertices() const {
-    return vertices;
+const VertexContainer* Mesh::getVertices() const {
+    return vertexContainer.get();
 }
 
 const std::vector<std::uint32_t> &Mesh::getIndices() const {

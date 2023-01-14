@@ -87,13 +87,13 @@ OpenGLRenderer::OpenGLRenderer(std::uint32_t width, std::uint32_t height)
     glDepthFunc(GL_LESS);
     checkGLError("unable to set GL depth function");
 
-/*
+
     glEnable(GL_CULL_FACE);
     checkGLError("unable to enable face culling");
 	glCullFace(GL_FRONT); // almost always want front face
     checkGLError("unable to set cull face to front");
 	glFrontFace(GL_CCW); // usually order of triangle indices is ccw
-    checkGLError("unabe to set ccw to front face");*/
+    checkGLError("unabe to set ccw to front face");
 }
 
 void OpenGLRenderer::setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline) {
@@ -109,11 +109,11 @@ void OpenGLRenderer::setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline)
             const RenderObject* object = step.getObject();
             if (object->getType() == RenderObjectType::INSTANCED) {
                 const InstancedRenderObject* instancedObject = static_cast<const InstancedRenderObject *>(object);
-                instancedObjectData[object] = std::make_unique<SSBO>(sizeof(pml::mat4) * instancedObject->getInstancesCount(), 2u);
+                instancedObjectData[object] = std::make_unique<SSBO>(sizeof(pml::mat4) * instancedObject->getInstancesCount(), OBJECT_TRANSFORM_SSBO_BINDING_INDEX);
                 instancedObjectData[object]->writeVector(instancedObject->getData());
             } else if (object->getType() == RenderObjectType::SINGLE) {
                 const SingleRenderObject* singleObject = static_cast<const SingleRenderObject *>(object);
-                singleObjectData[object] = std::make_unique<SSBO>(sizeof(pml::mat4), 2u);
+                singleObjectData[object] = std::make_unique<SSBO>(sizeof(pml::mat4), OBJECT_TRANSFORM_SSBO_BINDING_INDEX);
                 singleObjectData[object]->write(singleObject->getData());
             }
             const Mesh* objectMesh = object->getMesh();
@@ -128,7 +128,8 @@ void OpenGLRenderer::setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline)
     }
 
     // setup cameradata UBOs
-    cameraData = std::make_unique<UBO>(sizeof(pml::mat4), 1u);
+    // camera ubo set as binding index 0 for inside shader
+    cameraData = std::make_unique<UBO>(sizeof(pml::mat4), CAMERA_UBO_BINDING_INDEX);
 
 }
 
@@ -148,11 +149,12 @@ void OpenGLRenderer::startPass(RenderStep& step) {
 
     // clear target if specified in the step (todo)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    checkGLError("unable to clear");
 
     // update camera data 
     assert(cameraData);
     assert(camera);
-    cameraData.get()->write(camera->getCamMatrix());
+    cameraData.get()->overwrite(camera->getCamMatrix());
 
 }
 
@@ -178,32 +180,43 @@ void OpenGLRenderer::draw(RenderStep& step) {
     // show wireframe if specified
     if(renderObject->showsWireframe()) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        checkGLError("could not enable wireframe");
     }
 
-    // bind ubo and ssbo buffers for the object
-    glBindBufferBase(GL_UNIFORM_BUFFER, 1u, cameraData->getID());
-    checkGLError("could not bind cameraData UBO");
+    // update relevant ssbo and ubos
 
-    if (renderObject->getType() == RenderObjectType::SINGLE) {
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, singleObjectData[renderObject]->getID());
-        checkGLError("could not bind model data SSBO");
-    } else {
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2u, instancedObjectData[renderObject]->getID());
-        checkGLError("could not bind model data SSBO");
-    }
-    
-    // debug
-    const Camera* camera = step.getCamera();
+    // debug UBO/SSBO
+    /*
+    UBO debugUBO = UBO(sizeof(pml::mat4), 1u);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1u, debugUBO.getID());
+    debugUBO.overwrite(pml::mat4(0.1f, 0.2f, 0.3f, 1.0f,
+                                0.1f, 0.2f, 0.3f, 1.0f,
+                                0.1f, 0.2f, 0.3f, 1.0f,
+                                1.0f, 0.2f, 0.3f, 1.0f));
 
-    GLint debugCamUniLoc = glGetUniformLocation(material->getID(), "debugCam");
     GLint debugTransfUniLoc = glGetUniformLocation(material->getID(), "debugTransf");
-
-    glUniformMatrix4fv(debugCamUniLoc, 1, GL_FALSE, pml::dataPtr(camera->getCamMatrix()));
-    checkGLError("unable to set camera uniform data (debug)");
     const SingleRenderObject* singleObject = static_cast<const SingleRenderObject *>(renderObject);
     glUniformMatrix4fv(debugTransfUniLoc, 1, GL_FALSE, pml::dataPtr(singleObject->getData()));
     checkGLError("unable to set object transform uniform data (debug)");
+    */
 
+    // end debug
+
+    // bind ubo and ssbo buffers for the object
+    glBindBufferBase(GL_UNIFORM_BUFFER, CAMERA_UBO_BINDING_INDEX, cameraData->getID());
+    checkGLError("could not bind cameraData UBO");
+
+    if (renderObject->getType() == RenderObjectType::SINGLE) {
+        const SingleRenderObject* singleObject = static_cast<const SingleRenderObject *>(renderObject);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, OBJECT_TRANSFORM_SSBO_BINDING_INDEX, singleObjectData[renderObject]->getID());
+        checkGLError("could not bind model data SSBO");
+        singleObjectData[renderObject]->overwrite(singleObject->getData());
+    } else {
+        const InstancedRenderObject* instancedObject = static_cast<const InstancedRenderObject *>(renderObject);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, OBJECT_TRANSFORM_SSBO_BINDING_INDEX, instancedObjectData[renderObject]->getID());
+        checkGLError("could not bind model data SSBO");
+        instancedObjectData[renderObject]->overwrite(instancedObject->getData());
+    }
 
     drawObject(renderObject);
 }
@@ -212,8 +225,9 @@ void OpenGLRenderer::frame(RenderStep& step) {
 
 #   if defined(PRISM_PLATFORM_WIN32)
     const Win32OpenglWindow* window = static_cast<const Win32OpenglWindow*>(PrismRoot::windowManager().getCurrentWindow());
+    checkGLError("uncaught error before frame");
     SwapBuffers(window->getDeviceContext());
-
+    checkGLError("unable to swap buffers");
 #   endif
 }
 

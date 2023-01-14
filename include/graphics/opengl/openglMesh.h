@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <memory> 
 
 #include "graphics/opengl/openglVAO.h"
 #include "graphics/opengl/openglBuffers.h"
@@ -12,9 +13,9 @@ namespace prism {
 class OpenGLMesh : public Mesh {
 
 public:
-    OpenGLMesh(const BaseVertexContainer& vertices, const::std::vector<std::uint32_t>& indices, OpenglVAO* vao);
+    OpenGLMesh(std::unique_ptr<VertexContainer> vertexContainer, const::std::vector<std::uint32_t>& indices, OpenglVAO* vao);
 
-    void updateVertices(const BaseVertexContainer& newVertices) override;
+    void updateVertices(std::unique_ptr<VertexContainer> newVertexContainer) override;
 
     void updateIndices(const std::vector<std::uint32_t>& newIndices) override;
 

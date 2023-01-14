@@ -37,12 +37,12 @@ const Mesh* MeshManager::generateQuad(
     v4.colour = colour;
 
     VertexDataAttributes vertexDataAttr = getVertexDataAttributes(v1);
-    VertexContainer<VertexDataDebug> container(vertexDataAttr);
+    std::unique_ptr<VertexContainer> container = std::make_unique<VertexContainer>(vertexDataAttr);
 
-    container.addVertex(v1);
-    container.addVertex(v2);
-    container.addVertex(v3);
-    container.addVertex(v4);
+    container->addVertex(&v1);
+    container->addVertex(&v2);
+    container->addVertex(&v3);
+    container->addVertex(&v4);
 
     std::vector<std::uint32_t> indices {
         0, 1, 2, 0, 2, 3
@@ -76,11 +76,11 @@ const Mesh* MeshManager::generateTriangle(
     v3.colour = colour;
 
     VertexDataAttributes vertexDataAttr = getVertexDataAttributes(v1);
-    VertexContainer<VertexDataDebug> container(vertexDataAttr);
+    std::unique_ptr<VertexContainer> container = std::make_unique<VertexContainer>(vertexDataAttr);
 
-    container.addVertex(v1);
-    container.addVertex(v2);
-    container.addVertex(v3);
+    container->addVertex(&v1);
+    container->addVertex(&v2);
+    container->addVertex(&v3);
 
     std::vector<std::uint32_t> indices {
         0, 1, 2
@@ -124,16 +124,16 @@ const Mesh* MeshManager::generateCube(
 
 
     VertexDataAttributes vertexDataAttr = getVertexDataAttributes(v1);
-    VertexContainer<VertexDataDebug> container(vertexDataAttr);
+    std::unique_ptr<VertexContainer> container = std::make_unique<VertexContainer>(vertexDataAttr);
 
-    container.addVertex(v1);
-    container.addVertex(v2);
-    container.addVertex(v3);
-    container.addVertex(v4);
-    container.addVertex(v5);
-    container.addVertex(v6);
-    container.addVertex(v7);
-    container.addVertex(v8);
+    container->addVertex(&v1);
+    container->addVertex(&v2);
+    container->addVertex(&v3);
+    container->addVertex(&v4);
+    container->addVertex(&v5);
+    container->addVertex(&v6);
+    container->addVertex(&v7);
+    container->addVertex(&v8);
 
     std::vector<std::uint32_t> indices {
         0, 2, 1, 0, 3, 2, 
@@ -150,12 +150,12 @@ const Mesh* MeshManager::generateCube(
 }
 
 const Mesh* MeshManager::createMesh(
-    const BaseVertexContainer& vertexContainer, 
+    std::unique_ptr<VertexContainer> vertexContainer, 
     const std::vector<std::uint32_t>& indices)
 {
     assert(indices.size() >= 2);
     // generate hash
-    std::size_t meshId = prism::hash(vertexContainer.getVertexDataAttributes().vertexDataId, vertexContainer.getNumVertices(), indices.size());
+    std::size_t meshId = prism::hash(vertexContainer->getVertexAttr().vertexDataId, vertexContainer->getNumVertices(), indices.size());
     
     if (loadedMeshes.find(meshId) != loadedMeshes.end()) {
         return loadedMeshes[meshId].mesh.get();

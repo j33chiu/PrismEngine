@@ -39,13 +39,13 @@ public:
         const pml::FLOAT dimension);
 
     const Mesh* createMesh(
-        const BaseVertexContainer& vertexContainer, 
+        std::unique_ptr<VertexContainer> vertexContainer, 
         const std::vector<std::uint32_t>& indices);
 
 protected:
 
     virtual std::unique_ptr<Mesh> createUniqueMesh(
-        const BaseVertexContainer& vertexContainer, 
+        std::unique_ptr<VertexContainer> vertexContainer, 
         const std::vector<std::uint32_t>& indices) const = 0;
 
 private:

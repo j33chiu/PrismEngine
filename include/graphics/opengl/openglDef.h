@@ -17,6 +17,7 @@ static bool prismResolvedGLFunctions = false;
 #define GL_ELEMENT_ARRAY_BUFFER                     0x8893
 #define GL_UNIFORM_BUFFER                           0x8A11
 #define GL_SHADER_STORAGE_BUFFER                    0x90D2
+#define GL_DYNAMIC_STORAGE_BIT                      0x0100
 #define GL_STATIC_DRAW                              0x88E4
 #define GL_DYNAMIC_DRAW                             0x88E8
 #define GL_FRAGMENT_SHADER                          0x8B30
@@ -478,6 +479,8 @@ using GLuint64 = std::uint64_t;*/
     DO(void, glDeleteProgram, GLuint)                                                                           \
     DO(void, glUniformMatrix4fv, GLint, GLsizei, GLboolean, const GLfloat *)                                    \
     DO(GLint, glGetUniformLocation, GLuint, const GLchar *)                                                     \
+    DO(GLuint, glGetUniformBlockIndex, GLuint, const GLchar *)                                                  \
+    DO(void, glUniformBlockBinding, GLuint, GLuint, GLuint)                                                     \
 
 
 #elif defined(PRISM_PLATFORM_LINUX)

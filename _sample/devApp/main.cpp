@@ -67,12 +67,6 @@ void app(int, char**) {
 		.colour = prism::pml::vec4(0.1f, 0.75f, 0.3f, 1.0f)
 	};
 
-	/**
-	 * VERTEXDATA subclasses are BROKEN, data passed to engine is empty since VertexData is an empty class
-	 * 
-	 * 
-	*/
-
 	std::vector<std::uint32_t> win1Indices;
 	win1Indices.insert(win1Indices.end(), {0, 1, 2, 0, 2, 3});
 
@@ -81,15 +75,14 @@ void app(int, char**) {
 	layout (location = 0) in vec3 pos;
 	layout (location = 1) in vec4 col;
 
-	uniform mat4 debugCam;
-	uniform mat4 debugTransf;
-
-	layout (binding = 1) uniform cameraMatrix 
+	// ubo
+	layout(binding = 0) uniform cameraMatrix 
 	{
 		mat4 camMatrix;
 	};
 
-	layout (binding = 2) uniform objectTransform 
+	// ssbo
+	layout(binding = 1) buffer objectTransform 
 	{
 		mat4 transform;
 	};
@@ -97,7 +90,7 @@ void app(int, char**) {
 	out vec4 colour;
 	void main()
 	{
-		gl_Position = debugCam * vec4(vec3(debugTransf * vec4(pos, 1.0f)), 1.0f);
+		gl_Position = camMatrix * vec4(vec3(transform * vec4(pos, 1.0f)), 1.0f);
 		colour = col;
 	})";
 	const char* fragmentShaderSource = R"(#version 450 core
@@ -113,11 +106,11 @@ void app(int, char**) {
 	// mesh generation using vertices and indices above
 	// vertexDataAttr can be modified for custom user-defined vertices. here, a default vertex layout is used (VertexDataDebug)
 	prism::VertexDataAttributes vertexDataAttr = prism::getVertexDataAttributes(v1);
-	prism::VertexContainer<prism::VertexDataDebug> win1VerticesContainer(vertexDataAttr);
-	win1VerticesContainer.addVertex(v1);
-	win1VerticesContainer.addVertex(v2);
-	win1VerticesContainer.addVertex(v3);
-	win1VerticesContainer.addVertex(v4);
+	std::unique_ptr<prism::VertexContainer> win1VerticesContainer = std::make_unique<prism::VertexContainer>(vertexDataAttr);
+	win1VerticesContainer->addVertex(&v1);
+	win1VerticesContainer->addVertex(&v2);
+	win1VerticesContainer->addVertex(&v3);
+	win1VerticesContainer->addVertex(&v4);
 	const prism::Mesh* win1Mesh = prism::PrismRoot::meshManager().createMesh(std::move(win1VerticesContainer), win1Indices);
 	
 	// create object using created mesh. define location and primitive draw type
@@ -145,7 +138,7 @@ void app(int, char**) {
 		if (event1.has_value()) {
 			if (event1->isExitEvent()) running1 = false; 
 			prism::Event e1 = event1.value();
-			if (e1.getEventType() != prism::EventType::MOUSE_MOVE)
+			//if (e1.getEventType() != prism::EventType::MOUSE_MOVE)
 				prism::Logger::debug("main", e1);
 		}
 		/*

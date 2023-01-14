@@ -42,70 +42,49 @@ TEST(VertexDataTests, attributeInfoTests) {
 
 }
 
-
-void containerHelperFunc(const prism::BaseVertexContainer& genericCont, const void* testPtr, std::string vertexDataId) {
-    ASSERT_EQ(genericCont.getNumVertices(), 4);
-    ASSERT_EQ(genericCont.getDataSize(), sizeof(prism::VertexDataDebug) * 4);
-    ASSERT_EQ(genericCont.getVerticesAddress(), testPtr);
-    ASSERT_EQ(genericCont.getVertexDataAttributes().vertexDataId, vertexDataId);
-
-    prism::VertexDataDebug v1{
+TEST(VertexDataContainerTests, containerTests) {
+    prism::VertexDataDebug v{
         .pos = prism::pml::vec3(1.0f, 1.1f, 1.2f),
         .colour = prism::pml::vec4(0.9f, 0.8f, 0.7f, 1.0f)
     };
+    prism::VertexDataAttributes vAttr = prism::getVertexDataAttributes(v);
+    prism::VertexContainer cont(vAttr);
 
-    //prism::BaseVertexContainer copy(genericCont);
+    cont.addVertex(&v);
 
-    const prism::VertexContainer<prism::VertexDataDebug>& casted = static_cast<const prism::VertexContainer<prism::VertexDataDebug>&>(genericCont);
-    prism::VertexContainer<prism::VertexDataDebug> copyCasted(casted);
-    ASSERT_EQ(copyCasted.getNumVertices(), 4);
-    ASSERT_EQ(copyCasted.getDataSize(), sizeof(prism::VertexDataDebug) * 4);
-    // can't check copy's address since it is a new object
-    ASSERT_EQ(copyCasted.getVertexDataAttributes().vertexDataId, vertexDataId);
+    v.pos = prism::pml::vec3(2.0f, 2.1f, 2.2f);
+    v.colour = prism::pml::vec4(0.8f, 0.7f, 0.6f, 1.0f);
+
+    cont.addVertex(&v);
+    
+    v.pos = prism::pml::vec3(3.0f, 3.1f, 3.2f);
+    v.colour = prism::pml::vec4(0.7f, 0.6f, 0.5f, 1.0f);
+
+    cont.addVertex(&v);
+
+    ASSERT_EQ(cont.getNumVertices(), 3);
 }
 
-TEST(VertexDataContainerTests, containerTests) {
-    prism::VertexDataDebug v1{
-        .pos = prism::pml::vec3(1.0f, 1.1f, 1.2f),
-        .colour = prism::pml::vec4(0.9f, 0.8f, 0.7f, 1.0f)
+TEST(VertexDataContainerTests, containerApplicationTests) {
+    // test application in engine with vertex data
+    prism::VertexDataDebug v1 {
+        .pos = prism::pml::vec3(1.1f, 1.2f, 1.3f),
+        .colour = prism::pml::vec4(0.1f, 0.2f, 0.3f, 0.4f)
     };
-    prism::VertexDataAttributes vAttr = prism::getVertexDataAttributes(v1);
 
-    prism::VertexContainer<prism::VertexDataDebug> cont1(vAttr);
+    prism::VertexDataAttributes attr = prism::getVertexDataAttributes(v1);
+    prism::VertexContainer container(attr);
+    void* vertexPtr = &v1;
+    container.addVertex(vertexPtr);
 
-    cont1.addVertex(v1);
-
-    {
-        prism::VertexDataDebug v2{
-            .pos = prism::pml::vec3(2.0f, 2.1f, 2.2f),
-            .colour = prism::pml::vec4(0.8f, 0.7f, 0.6f, 1.0f)
-        };
-        prism::VertexDataDebug v3{
-            .pos = prism::pml::vec3(3.0f, 3.1f, 3.2f),
-            .colour = prism::pml::vec4(0.7f, 0.6f, 0.5f, 1.0f)
-        };
-        cont1.addVertex(v2);
-        cont1.addVertex(v3);
+    std::vector<std::uint8_t> casted = container.getBytesCopy();
+    std::uint8_t* castedPtr = casted.data();
+    std::uint8_t* actual = static_cast<std::uint8_t*>(vertexPtr);
+    // check each byte
+    ASSERT_EQ(casted.size(), 28);
+    for (int i = 0; i < 28; i++) {
+        ASSERT_EQ(castedPtr[i], actual[i]);
     }
-
-    const std::vector<prism::VertexDataDebug>& vertices = cont1.getVertices();
-
-
-
-    ASSERT_EQ(vertices.size(), 3);
-
-    prism::VertexDataDebug v4{
-        .pos = prism::pml::vec3(4.0f, 4.1f, 4.2f),
-        .colour = prism::pml::vec4(0.6f, 0.5f, 0.4f, 1.0f)
-    };
-    cont1.addVertex(v4);
-
-    ASSERT_EQ(vertices.size(), 4);
-    ASSERT_EQ(vertices.data(), cont1.getVerticesAddress());
-
-    containerHelperFunc(std::move(cont1), vertices.data(), vAttr.vertexDataId);
-
-    ASSERT_EQ(cont1.getNumVertices(), 4);
 
 }
 
