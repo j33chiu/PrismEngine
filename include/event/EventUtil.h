@@ -7,7 +7,7 @@
 namespace prism {
 
 enum class EventType : std::uint8_t {
-    NONE,
+    NONE = 0U,
     EXIT,
     FOCUS,
     KEY,
@@ -18,14 +18,21 @@ enum class EventType : std::uint8_t {
 };
 
 enum class EventState : std::uint8_t {
-    UP,             // key, mouse button and mouse scroll states
+    UP = 10U,             // key, mouse button and mouse scroll states
     DOWN,           // key, mouse button and mouse scroll states
     ON,             // focus events
     OFF             // focus events
 };
 
+enum class MouseButton : std::uint8_t {
+    LEFT = 20U,
+    MIDDLE,
+    RIGHT,
+    MB4, MB5 // for extra mouse buttons
+};
+
 enum class KeyId : std::uint32_t {
-    NONE,
+    NONE = 100U,
     UNKNWN,
     NUM0, NUM1, NUM2, NUM3, NUM4, NUM5, NUM6, NUM7, NUM8, NUM9,
     A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
@@ -36,13 +43,5 @@ enum class KeyId : std::uint32_t {
     VOL_UP, VOL_DN, MUTE, 
     NP_DECIMAL, NP_MULT, NP_DIV, NP_PLUS, NP_MINUS, NP_CLEAR, NP_ENTER, NP_EQ, NP0, NP1, NP2, NP3, NP4, NP5, NP6, NP7, NP8, NP9
 };
-
-enum class MouseButton : std::uint32_t {
-    LEFT,
-    MIDDLE,
-    RIGHT,
-    MB4, MB5 // for extra mouse buttons
-};
-
 
 }

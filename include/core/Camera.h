@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "core/math/pml.h"
+#include "core/PrismId.h"
 
 namespace prism {
 
@@ -16,6 +17,9 @@ class Camera {
 public:
     
     Camera(std::uint32_t width, std::uint32_t height, float fovDegrees = 45.0f, float near = 0.1f, float far = 500.0f, CameraType type = CameraType::PERSPECTIVE);
+
+    PrismId getId() const;
+
     void updateCamMatrix();
 
     std::uint32_t getWidth() const;
@@ -43,6 +47,8 @@ public:
     pml::mat4 getCamMatrix() const;
 
 private:
+
+    PrismId cameraId;
 
     std::uint32_t width;
     std::uint32_t height;

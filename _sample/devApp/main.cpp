@@ -48,23 +48,33 @@ void app(int, char**) {
 	win1Cam->setOrientation(camOrientation);
 	win1Cam->updateCamMatrix();
 
+	// create second camera for debug purposes
+	prism::Camera* win1Cam2 = win1Pipeline->createNewCamera();
+	prism::pml::vec3 camPos2(0.0f, 0.5f, 1.0f);
+	prism::pml::vec3 camUp2(0.0f, 1.0f, 0.0f);
+	prism::pml::vec3 camOrientation2(0.0f, 0.0f, -1.0f);
+	win1Cam2->setPosition(camPos2);
+	win1Cam2->setUp(camUp2);
+	win1Cam2->setOrientation(camOrientation2);
+	win1Cam2->updateCamMatrix();
+
 	
 	// create square (add object to scene in pipeline)
 	prism::VertexDataDebug v1 {
 		.pos = prism::pml::vec3(-0.5f,  0.5f, -3.0f),
-		.colour = prism::pml::vec4(0.1f, 0.75f, 0.3f, 1.0f)
+		.colour = prism::pml::vec4(0.1f, 0.6f, 0.3f, 1.0f)
 	};
 	prism::VertexDataDebug v2 {
 		.pos = prism::pml::vec3( 0.5f,  0.5f, -3.0f),
-		.colour = prism::pml::vec4(0.1f, 0.75f, 0.3f, 1.0f)
+		.colour = prism::pml::vec4(0.3f, 0.2f, 0.5f, 1.0f)
 	};
 	prism::VertexDataDebug v3 {
 		.pos = prism::pml::vec3( 0.5f, -0.5f, -3.0f),
-		.colour = prism::pml::vec4(0.1f, 0.75f, 0.3f, 1.0f)
+		.colour = prism::pml::vec4(0.5f, 0.9f, 0.7f, 1.0f)
 	};
 	prism::VertexDataDebug v4 {
 		.pos = prism::pml::vec3(-0.5f, -0.5f, -3.0f),
-		.colour = prism::pml::vec4(0.1f, 0.75f, 0.3f, 1.0f)
+		.colour = prism::pml::vec4(0.7f, 0.15f, 0.9f, 1.0f)
 	};
 
 	std::vector<std::uint32_t> win1Indices;
@@ -126,31 +136,23 @@ void app(int, char**) {
 	window1->setRenderPipeline(std::move(win1Pipeline));
 	//window2->setRenderPipeline(std::move(win2Pipeline));
 
-	// issue with polling and framerates:
-	// lower framerates are limiting the polling. However, windows events are detected outside this thread
-	// this results in a growing queue of events, so the application falls behind when polling
-	// would have to poll the window in a separate thread and handle accordingly
+	window1->startRenderThread();
+	//auto event2 = window2->pollWindow();
 	while (running1) { // || running2) {
-		
 		auto event1 = window1->pollWindow();
-		//auto event2 = window2->pollWindow();
-
 		if (event1.has_value()) {
 			if (event1->isExitEvent()) running1 = false; 
 			prism::Event e1 = event1.value();
-			//if (e1.getEventType() != prism::EventType::MOUSE_MOVE)
+			if (e1.getEventType() != prism::EventType::MOUSE_MOVE) {
 				prism::Logger::debug("main", e1);
+			}
+			else {
+				prism::Logger::debug("main", e1);
+			}
 		}
-		/*
-		if (event2.has_value()) {
-			if (event2->isExitEvent()) running2 = false; 
-			prism::Event e2 = event2.value();
-			if (e2.getEventType() != prism::EventType::MOUSE_MOVE)
-				prism::Logger::debug("main", e2);
-		}*/
-		window1->render();
-		//window2->render();
 	}
+	window1->stopRenderThread();
+	// TODO: currently getting errors of unable to delete vao, shader program, buffers. This is due to multithreading, improper contexts and deallocation in wrong threads idk
 
 }
 

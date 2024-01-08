@@ -16,7 +16,6 @@ void engineRootInit(prism::Platform platformInfo) {
     // so far, only support windows
     // TODO: support linux, macos
 
-    std::unique_ptr<prism::FileManager> fileManager;
     std::unique_ptr<prism::WindowManager> windowManager;
     std::unique_ptr<prism::MeshManager> meshManager;
     std::unique_ptr<prism::MaterialManager> materialManager;
@@ -24,7 +23,6 @@ void engineRootInit(prism::Platform platformInfo) {
     // handle platform device first:
     switch (platformInfo.devicePlatform) {
         case prism::DevicePlatform::WINDOWS:
-            fileManager = std::make_unique<prism::FileManager>();
             windowManager = std::make_unique<prism::Win32WindowManager>(platformInfo);
             break;
         default:
@@ -51,7 +49,6 @@ void engineRootInit(prism::Platform platformInfo) {
 
     prism::PrismRoot::registerGraphicsApi(
         platformInfo.graphicsApi,
-        std::move(fileManager),
         std::move(windowManager),
         std::move(meshManager),
         std::move(materialManager));

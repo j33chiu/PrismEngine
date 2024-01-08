@@ -12,6 +12,11 @@ target_sources(prism PRIVATE
 	${_INCL}/Renderer.h
 	${_INCL}/RenderPipeline.h
 	${_INCL}/RenderStep.h
+	${_INCL}/RenderTarget.h
+	${_INCL}/RenderTargetManager.h
+	${_INCL}/Texture.h
+	${_INCL}/TextureManager.h
+	${_INCL}/TextureSampler.h
 	${_INCL}/Scene.h
 	${_INCL}/RenderObject.h
 	${_INCL}/SingleRenderObject.h
@@ -25,6 +30,11 @@ target_sources(prism PRIVATE
 	Renderer.cpp
 	RenderPipeline.cpp
 	RenderStep.cpp
+	RenderTarget.cpp
+	RenderTargetManager.cpp
+	Texture.cpp
+	TextureManager.cpp
+	TextureSampler.cpp
 	Scene.cpp
 	RenderObject.cpp
 	SingleRenderObject.cpp

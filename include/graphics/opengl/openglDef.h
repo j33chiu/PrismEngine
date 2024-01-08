@@ -488,9 +488,13 @@ using GLuint64 = std::uint64_t;*/
 #endif
 
 // macro declaration of gl functions
-#define DECL_FUNC(RETURN, NAME, ...) EXTERN RETURN (*NAME)(__VA_ARGS__);  
+// example: typedef void WINAPI glDeleteBuffersFunc(GLsizei, const GLuint *);
+#define DECL_TYPEDEF_FUNC(RETURN, NAME, ...) typedef RETURN WINAPI NAME ## Func (__VA_ARGS__);
+// example: EXTERN glDeleteBuffersFunc (*glDeleteBuffers);
+#define DECL_FUNC(RETURN, NAME, ...) EXTERN NAME ## Func (*NAME);  
 
 #ifdef LOOP_GL_DECL_FUNC
+LOOP_GL_DECL_FUNC(DECL_TYPEDEF_FUNC);
 LOOP_GL_DECL_FUNC(DECL_FUNC);
 #else
 #error Unable to declare necessary GL functions

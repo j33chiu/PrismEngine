@@ -1,5 +1,7 @@
 #include "core/Camera.h"
 
+#include "core/PrismId.h"
+
 namespace prism {
 
 Camera::Camera(std::uint32_t width, std::uint32_t height, float fovDegrees, float near, float far, CameraType type)
@@ -11,6 +13,10 @@ Camera::Camera(std::uint32_t width, std::uint32_t height, float fovDegrees, floa
     , type(type)
 {
     updateCamMatrix();
+}
+
+PrismId Camera::getId() const {
+    return cameraId;
 }
 
 void Camera::updateCamMatrix() {

@@ -532,7 +532,8 @@ std::optional<Event> Win32Window::pollWindow() {
         }
     }
 
-    // todo: allow user to register listeners and other functions to the window, which can be processed/called here
+    // TODO: allow user to register listeners and other functions to the window, which can be processed/called here
+    // TODO: onWindowChangedSize function, needs to modify renderer renderpipeline etc
 
     return event;
 }

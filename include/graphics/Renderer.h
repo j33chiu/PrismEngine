@@ -20,6 +20,8 @@ public:
 
     virtual void setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline);
 
+    virtual RenderPipeline* getRenderPipeline() const;
+
 protected:
 
     virtual void preRender();

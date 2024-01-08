@@ -11,6 +11,15 @@ public:
 
     ~Win32OpenglWindow() = default;
 
+    void removeContext() override;
+
+    void setContext() override;
+
+private:
+    bool initActualOpenGL(HDC actualDc);
+
+    HGLRC glContext;
+
 };
 
 
