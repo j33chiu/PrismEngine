@@ -4,6 +4,7 @@
 #include <tuple>
 #include <memory>
 
+#include "core/PrismId.h"
 #include "graphics/RenderObject.h"
 #include "graphics/PrimitiveType.h"
 #include "graphics/Material.h"
@@ -25,11 +26,15 @@ public:
     std::vector<std::tuple<const Material*, std::unique_ptr<RenderObject>>>& getObjects();
     const std::vector<std::tuple<const Material*, std::unique_ptr<RenderObject>>>& getObjects() const;
 
+    PrismId getId() const;
+
 private:
     // only renderpipeline should be able to create/own scenes
     friend class RenderPipeline;
     Scene();
 
+    // scene id
+    PrismId sceneId;
 
     // map of material to objects, mostly for optimizing shader bindings
     std::vector<std::tuple<const Material*, std::unique_ptr<RenderObject>>> objects;

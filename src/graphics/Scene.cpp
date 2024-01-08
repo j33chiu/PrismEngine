@@ -37,4 +37,8 @@ const std::vector<std::tuple<const Material*, std::unique_ptr<RenderObject>>>& S
     return objects;
 }
 
+PrismId Scene::getId() const {
+    return sceneId;
+}
+
 }

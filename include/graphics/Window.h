@@ -3,7 +3,9 @@
 #include <memory>
 #include <cstdint>
 #include <functional>
+#include <thread>
 
+#include "core/Controller.h"
 #include "event/Event.h"
 #include "graphics/Renderer.h"
 #include "graphics/RenderPipeline.h"
@@ -26,7 +28,10 @@ public:
 
     // rendering to window
     void setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline);
-    void render();
+    RenderPipeline* getRenderPipeline() const;
+    virtual void removeContext();
+    virtual void setContext();
+    virtual void render();
 
     // for multiple windows, allow prism to know which is in focus and handle focus/unfocus events
     void setPrismFocusCallback(std::function<void(Window*)> prismGrabFocusCallback);
@@ -38,15 +43,26 @@ public:
 
     bool getHasPrismFocus();
 
+    // these should only be called from the main thread
+    void startRenderThread();
+    void stopRenderThread();
+    bool isRenderThreadRunning() const;
+
 protected:
     std::uint32_t width;
     std::uint32_t height;
     std::unique_ptr<Renderer> renderer;
     bool hasPrismFocus = false;
     
-
 private: 
     std::function<void(Window*)> prismGrabFocusCallback;
+
+    // for render thread
+    bool renderFlag = false;
+    bool renderThreadRunning = false;
+    std::thread renderThread;
+
+    void renderLoop();
 
 };
 

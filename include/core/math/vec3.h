@@ -1275,5 +1275,18 @@ constexpr vec<3, bool> operator||(vec<3, bool> const& v1, vec<3, bool> const& v2
 	);
 }
 
+template<typename T>
+constexpr bool operator==(vec<3, T> const& v1, vec<3, T> const& v2) {
+	return 
+		equal(v1.x, v2.x) &&
+		equal(v1.y, v2.y) &&
+		equal(v1.z, v2.z);
+}
+
+template<typename T>
+constexpr bool operator!=(vec<3, T> const& v1, vec<3, T> const& v2) {
+	return !(v1 == v2);
+}
+
 }
 }

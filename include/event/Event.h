@@ -3,6 +3,7 @@
 #include <ostream>
 #include <optional>
 #include <variant>
+#include <string>
 
 #include "ExitEvent.h"
 #include "FocusEvent.h"
@@ -11,6 +12,8 @@
 #include "MouseEvent.h"
 #include "MouseScrollEvent.h"
 #include "MouseMoveEvent.h"
+
+#include "util/PrismHash.h"
 
 namespace prism {
 
@@ -98,6 +101,50 @@ private:
 
     std::variant<ExitEvent, FocusEvent, KeyEvent, MouseButtonEvent, MouseEvent, MouseScrollEvent, MouseMoveEvent> event;
 
+    
+
+};
+
+}
+
+namespace std {
+
+// override hash for prism::Event objects
+template<>
+struct hash<prism::Event> {
+    std::size_t operator()(const prism::Event& event) const {
+        std::size_t hashResult;
+        switch(event.getEventType()) {
+        case prism::EventType::KEY:
+            if (event.getKeyEvent().has_value())
+                hashResult = prism::hash(event.getEventType(), event.getKeyEvent().value().key, event.getKeyEvent().value().keyState);
+            else 
+                hashResult = prism::hash(event.getEventType());
+            break;
+        case prism::EventType::MOUSE_BUTTON:
+            if (event.getMouseButtonEvent().has_value())
+                hashResult = prism::hash(event.getEventType(), event.getMouseButtonEvent().value().buttonId, event.getMouseButtonEvent().value().state);
+            else
+                hashResult = prism::hash(event.getEventType());
+            break;
+        case prism::EventType::MOUSE_SCROLL:
+            if (event.getMouseScrollEvent().has_value())
+                hashResult = prism::hash(event.getEventType(), event.getMouseScrollEvent().value().state);
+            else 
+                hashResult = prism::hash(event.getEventType());
+            break;
+        case prism::EventType::EXIT:
+        case prism::EventType::FOCUS:
+        case prism::EventType::MOUSE:
+        case prism::EventType::MOUSE_MOVE:
+        case prism::EventType::NONE:
+        default:
+            hashResult = prism::hash(event.getEventType());
+            break;
+        }
+
+        return hashResult;
+    }
 };
 
 }

@@ -11,7 +11,7 @@ Renderer::Renderer()
 
 void Renderer::render() {
     preRender();
-
+    this->pipeline->updateQueue();
     for (RenderStep& step : renderQueue) {
         switch(step.getType()) {
             case RenderStepType::START_PASS: startPass(step); break;
@@ -29,6 +29,11 @@ void Renderer::setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline) {
     this->pipeline = std::move(pipeline);
     this->pipeline->buildQueue();
     renderQueue = this->pipeline->getRenderQueue();
+}
+
+RenderPipeline* Renderer::getRenderPipeline() const {
+    if (!this->pipeline) return nullptr;
+    return this->pipeline.get();
 }
 
 // render functions are empty (are implemented based on graphics api)
