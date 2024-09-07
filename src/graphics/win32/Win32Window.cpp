@@ -502,11 +502,14 @@ std::optional<Event> Win32Window::pollWindow() {
     }
 
     std::optional<Event> event;
+    // get event queue
     if (eventMap.find(window) != eventMap.end()) {
         if (!eventMap[window].empty()) {
             event = eventMap[window].front();
             eventMap[window].pop();
         }
+    } else {
+        prism::Logger::error("Win32Window", "Unable to get Event queue");
     }
 
     // iterate to count number of ticks a key/mouse button is pressed

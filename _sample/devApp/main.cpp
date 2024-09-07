@@ -147,7 +147,7 @@ void app(int, char**) {
 				prism::Logger::debug("main", e1);
 			}
 			else {
-				prism::Logger::debug("main", e1);
+				//prism::Logger::debug("main", e1);
 			}
 		}
 	}
