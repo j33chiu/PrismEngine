@@ -15,6 +15,8 @@ public:
 
     void setContext() override;
 
+    void updateGraphicsSettings() override;
+
 private:
     bool initActualOpenGL(HDC actualDc);
 

@@ -9,6 +9,14 @@ Window::Window(std::uint32_t width, std::uint32_t height)
     height(height)
 {}
 
+GraphicsSettings* Window::getGraphicsSettings() {
+    return &graphicsSettings;
+}
+
+void Window::updateGraphicsSettings() {
+    // empty by default, implemented by the specific platform, as they each have different apis for stuff like vsync frame rates, texture resolution
+}
+
 void Window::setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline) {
     renderer->setRenderPipeline(std::move(pipeline));
 }
@@ -72,8 +80,25 @@ bool Window::isRenderThreadRunning() const {
 
 void Window::renderLoop() {
     this->setContext(); // set context in render thread
+
+    // fps counter
+    int frames = 0;
+    float fps = 0.0f;
+    auto startTime = std::chrono::steady_clock::now();
+    int elapsedMs;
     while(renderFlag) {
         this->render();
+
+        // fps counting
+        auto timeNow = std::chrono::steady_clock::now();
+        elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - startTime).count();
+        frames++;
+        if (elapsedMs >= 1000) {
+            startTime = timeNow;
+            fps = (frames * 1000.0f) / elapsedMs;
+            frames = 0;
+            prism::Logger::info("Window::renderLoop::fps", fps);
+        }
     }
     renderThreadRunning = false;
     this->removeContext(); // remove context from render thread, renderloop is done, usually means app shutdown, or stop rendering of scene

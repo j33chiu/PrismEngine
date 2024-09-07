@@ -8,6 +8,7 @@ target_sources(prism PRIVATE
 	${_INCL}/WindowManager.h
 
 	#render stuff
+	${_INCL}/GraphicsSettings.h
 	${_INCL}/PrimitiveType.h
 	${_INCL}/Renderer.h
 	${_INCL}/RenderPipeline.h
@@ -27,6 +28,7 @@ target_sources(prism PRIVATE
 	${_INCL}/MeshManager.h
 	${_INCL}/Vertex.h
 	${_INCL}/ShaderType.h
+	GraphicsSettings.cpp
 	Renderer.cpp
 	RenderPipeline.cpp
 	RenderStep.cpp

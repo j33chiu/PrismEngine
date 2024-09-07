@@ -293,7 +293,15 @@ bool Win32OpenglWindow::initActualOpenGL(HDC actualDc) {
         throw prism::Exception("Win32OpenglWindow: Failed to set OpenGL context");
     }
 
+    // apply graphics settings
+    updateGraphicsSettings();
+
     return true;
+}
+
+void Win32OpenglWindow::updateGraphicsSettings() {
+    // vsync
+    wglSwapIntervalEXT(graphicsSettings.isVsyncEnabled());
 }
 
 }

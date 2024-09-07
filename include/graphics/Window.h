@@ -9,6 +9,7 @@
 #include "event/Event.h"
 #include "graphics/Renderer.h"
 #include "graphics/RenderPipeline.h"
+#include "graphics/GraphicsSettings.h"
 
 namespace prism {
 
@@ -25,6 +26,10 @@ public:
     virtual void setCursorStyle() = 0;
     virtual void showWindowCursor(bool shouldShow) = 0;
     virtual std::optional<Event> pollWindow() = 0;
+
+    // get/set/update graphics settings
+    GraphicsSettings* getGraphicsSettings();
+    virtual void updateGraphicsSettings();
 
     // rendering to window
     void setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline);
@@ -53,6 +58,8 @@ protected:
     std::uint32_t height;
     std::unique_ptr<Renderer> renderer;
     bool hasPrismFocus = false;
+
+    GraphicsSettings graphicsSettings;
     
 private: 
     std::function<void(Window*)> prismGrabFocusCallback;
