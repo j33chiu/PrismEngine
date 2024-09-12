@@ -3,6 +3,7 @@
 #include <limits>
 
 #include "prismTypeDef.h"
+#include "pmlFunctor.h"
 
 namespace prism {
 namespace pml {
