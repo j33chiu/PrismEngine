@@ -27,6 +27,8 @@ public:
     void setCursorStyle() override;
     void showWindowCursor(bool shouldShow) override;
     std::optional<Event> pollWindow() override;
+    bool isKeyPressed(KeyId key) override;
+    bool isMousePressed(MouseButton mouseButton) override;
 
 
     HDC getDeviceContext() const;

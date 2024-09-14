@@ -177,6 +177,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             }
             heldMouseButtonsSet[hwnd].clear();
             break;
+        case WM_SIZE:
+            // width = LOWORD(lParam), height = HIWORD(lParam)
+            eventMap[hwnd].push(prism::SizeEvent(LOWORD(lParam), HIWORD(lParam)));
+            break;
         case WM_CLOSE: 
             eventMap[hwnd].push(prism::ExitEvent());
             break;
@@ -539,6 +543,16 @@ std::optional<Event> Win32Window::pollWindow() {
     // TODO: onWindowChangedSize function, needs to modify renderer renderpipeline etc
 
     return event;
+}
+
+bool Win32Window::isKeyPressed(KeyId key) {
+    std::set<prism::KeyId> *keySet = &heldKeysSet[window];
+    return keySet->find(key) != keySet->end();
+}
+
+bool Win32Window::isMousePressed(MouseButton mouseButton) {
+    std::set<prism::MouseButton> *mouseSet = &heldMouseButtonsSet[window];
+    return mouseSet->find(mouseButton) != mouseSet->end();
 }
 
 HDC Win32Window::getDeviceContext() const {

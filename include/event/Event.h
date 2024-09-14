@@ -12,6 +12,7 @@
 #include "MouseEvent.h"
 #include "MouseScrollEvent.h"
 #include "MouseMoveEvent.h"
+#include "SizeEvent.h"
 
 #include "util/PrismHash.h"
 
@@ -31,6 +32,7 @@ public:
     Event(MouseEvent mouseEvent);
     Event(MouseScrollEvent mouseScrollEvent);
     Event(MouseMoveEvent mouseMoveEvent);
+    Event(SizeEvent sizeEvent);
 
     EventType getEventType() const;
 
@@ -54,6 +56,9 @@ public:
 
     std::optional<MouseMoveEvent> getMouseMoveEvent() const;
     bool isMouseMoveEvent() const;
+
+    std::optional<SizeEvent> getSizeEvent() const;
+    bool isSizeEvent() const;
 
     friend std::ostream &operator<<(std::ostream& stream, const Event& event) {
         switch(event.getEventType()) {
@@ -81,13 +86,18 @@ public:
         case EventType::MOUSE_SCROLL:
             stream << "triggered MOUSE_SCROLL event.";
             if (event.getMouseScrollEvent().has_value())
-                stream <<  event.getMouseScrollEvent().value();
+                stream << event.getMouseScrollEvent().value();
             break;
         case EventType::MOUSE_MOVE:
             // LOTS of debug messages: commented out
             //stream << "triggered MOUSE_MOVE event.";
             //if (event.getMouseMoveEvent().has_value())
             //    stream << event.getMouseMoveEvent().value();
+            break;
+        case EventType::SIZE:
+            stream << "triggered window size event: ";
+            if (event.getSizeEvent().has_value())
+                stream << event.getSizeEvent().value();
             break;
         default:
             stream << "triggered UNKNOWN event.";
@@ -99,7 +109,7 @@ public:
 private:
     EventType eventType;
 
-    std::variant<ExitEvent, FocusEvent, KeyEvent, MouseButtonEvent, MouseEvent, MouseScrollEvent, MouseMoveEvent> event;
+    std::variant<ExitEvent, FocusEvent, KeyEvent, MouseButtonEvent, MouseEvent, MouseScrollEvent, MouseMoveEvent, SizeEvent> event;
 
     
 

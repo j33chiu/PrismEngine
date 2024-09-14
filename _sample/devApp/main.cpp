@@ -28,14 +28,14 @@ void app(int, char**) {
 	// todo: eventually have a class that handles polling, framerate caps, gameticking etc
 	// todo: spawn new threads per window
 
-	auto window1 = prism::PrismRoot::windowManager().createWindow(800, 600);
+	auto window1 = prism::PrismRoot::windowManager().createWindow(2560, 1377);
 	//auto window2 = prism::PrismRoot::windowManager().createWindow(1000, 900);
 
 	bool running1 = true;
 	//bool running2 = true;
 
 	// debug/testing scene
-	std::unique_ptr<prism::RenderPipeline> win1Pipeline = std::make_unique<prism::RenderPipeline>(800, 600);
+	std::unique_ptr<prism::RenderPipeline> win1Pipeline = std::make_unique<prism::RenderPipeline>(2560, 1377);
 	prism::Scene* win1Scene = win1Pipeline->createNewScene();
 
 	// create camera and add to pipeline
@@ -49,14 +49,14 @@ void app(int, char**) {
 	win1Cam->updateCamMatrix();
 
 	// create second camera for debug purposes
-	prism::Camera* win1Cam2 = win1Pipeline->createNewCamera();
-	prism::pml::vec3 camPos2(0.0f, 0.5f, 1.0f);
-	prism::pml::vec3 camUp2(0.0f, 1.0f, 0.0f);
-	prism::pml::vec3 camOrientation2(0.0f, 0.0f, -1.0f);
-	win1Cam2->setPosition(camPos2);
-	win1Cam2->setUp(camUp2);
-	win1Cam2->setOrientation(camOrientation2);
-	win1Cam2->updateCamMatrix();
+	// prism::Camera* win1Cam2 = win1Pipeline->createNewCamera();
+	// prism::pml::vec3 camPos2(0.0f, 0.5f, 1.0f);
+	// prism::pml::vec3 camUp2(0.0f, 1.0f, 0.0f);
+	// prism::pml::vec3 camOrientation2(0.0f, 0.0f, -1.0f);
+	// win1Cam2->setPosition(camPos2);
+	// win1Cam2->setUp(camUp2);
+	// win1Cam2->setOrientation(camOrientation2);
+	// win1Cam2->updateCamMatrix();
 
 	
 	// create square (add object to scene in pipeline)
@@ -140,16 +140,32 @@ void app(int, char**) {
 	//auto event2 = window2->pollWindow();
 	while (running1) { // || running2) {
 		auto event1 = window1->pollWindow();
+		// catch and pring events (key presses and releases, window focus events)
 		if (event1.has_value()) {
 			if (event1->isExitEvent()) running1 = false; 
 			prism::Event e1 = event1.value();
 			if (e1.getEventType() != prism::EventType::MOUSE_MOVE) {
 				prism::Logger::debug("main", e1);
+				
 			}
 			else {
 				//prism::Logger::debug("main", e1);
 			}
 		}
+		// check state of keypresses 
+		if (window1->isKeyPressed(prism::KeyId::W)) {
+			camPos.z -= 0.0005f;
+		}
+		if (window1->isKeyPressed(prism::KeyId::S)) {
+			camPos.z += 0.0005f;
+		}
+		if (window1->isKeyPressed(prism::KeyId::SPACE)) {
+			camPos.y = 0.5f;
+		} else {
+			camPos.y = 0.0f;
+		}
+		win1Cam->setPosition(camPos);
+		win1Cam->updateCamMatrix();
 	}
 	window1->stopRenderThread();
 	// TODO: currently getting errors of unable to delete vao, shader program, buffers. This is due to multithreading, improper contexts and deallocation in wrong threads idk

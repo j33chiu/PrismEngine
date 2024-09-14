@@ -26,6 +26,8 @@ public:
     virtual void setCursorStyle() = 0;
     virtual void showWindowCursor(bool shouldShow) = 0;
     virtual std::optional<Event> pollWindow() = 0;
+    virtual bool isKeyPressed(KeyId key) = 0;
+    virtual bool isMousePressed(MouseButton mouseButton) = 0;
 
     // get/set/update graphics settings
     GraphicsSettings* getGraphicsSettings();

@@ -14,7 +14,8 @@ enum class EventType : std::uint8_t {
     MOUSE,
     MOUSE_BUTTON,
     MOUSE_SCROLL,
-    MOUSE_MOVE
+    MOUSE_MOVE,
+    SIZE
 };
 
 enum class EventState : std::uint8_t {
