@@ -16,7 +16,7 @@ class Camera {
 
 public:
     
-    Camera(std::uint32_t width, std::uint32_t height, float fovDegrees = 45.0f, float near = 0.1f, float far = 500.0f, CameraType type = CameraType::PERSPECTIVE);
+    Camera(std::uint32_t width, std::uint32_t height, float fovRad = pml::toRadians(70.0f), float near = 0.1f, float far = 500.0f, CameraType type = CameraType::PERSPECTIVE);
 
     PrismId getId() const;
 
@@ -34,8 +34,8 @@ public:
     pml::vec3 getUp() const;
     void setUp(pml::vec3& up);
     
-    float getFovDegrees() const;
-    void setFovDegrees(float fovDegrees);
+    float getfovRad() const;
+    void setfovRad(float fovRad);
     float getNear() const;
     void setNear(float near);
     float getFar() const;
@@ -61,7 +61,7 @@ private:
     pml::mat4 view;
     pml::mat4 camMatrix;
 
-    float fovDegrees;
+    float fovRad;
     float nearPlane;
     float farPlane;
 

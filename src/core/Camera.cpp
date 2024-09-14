@@ -4,10 +4,10 @@
 
 namespace prism {
 
-Camera::Camera(std::uint32_t width, std::uint32_t height, float fovDegrees, float near, float far, CameraType type)
+Camera::Camera(std::uint32_t width, std::uint32_t height, float fovRad, float near, float far, CameraType type)
     : width(width)
     , height(height)
-    , fovDegrees(fovDegrees)
+    , fovRad(fovRad)
     , nearPlane(near)
     , farPlane(far)
     , type(type)
@@ -23,7 +23,7 @@ void Camera::updateCamMatrix() {
     switch(type) {
         default:
         case CameraType::PERSPECTIVE:
-            projection = pml::perspective(fovDegrees, static_cast<float>(width) / height, nearPlane, farPlane);
+            projection = pml::perspective(fovRad, static_cast<float>(width) / height, nearPlane, farPlane);
             break;
         case CameraType::ORTHOGRAPHIC:
             projection = pml::ortho(0.0f, static_cast<float>(width), 0.0f, static_cast<float>(height), nearPlane, farPlane);
@@ -74,12 +74,12 @@ void Camera::setUp(pml::vec3& up) {
     this->up = up;
 }
 
-float Camera::getFovDegrees() const {
-    return fovDegrees;
+float Camera::getfovRad() const {
+    return fovRad;
 }
 
-void Camera::setFovDegrees(float fovDegrees) {
-    this->fovDegrees = fovDegrees;
+void Camera::setfovRad(float fovRad) {
+    this->fovRad = fovRad;
 }
 
 float Camera::getNear() const {
