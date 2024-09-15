@@ -46,13 +46,13 @@ mat<4, 4, T> frustrum(T left, T right, T bottom, T top, T near, T far) {
 }*/
 
 template<typename T>
-// fov should be radians
+// fov should be radians, this is a right-handed perspective matrix
 mat<4, 4, T> perspective(T fovRad, T aspectRatio, T zNear, T zFar) {
     assert(std::abs(aspectRatio - std::numeric_limits<T>::epsilon()) > static_cast<T>(0));
     T const fov2 = tan(fovRad / static_cast<T>(2));
 
     mat<4, 4, T> m(static_cast<T>(0));
-    m[0][0] = aspectRatio / fov2;
+    m[0][0] = static_cast<T>(1) / (aspectRatio * fov2);
     m[1][1] = static_cast<T>(1) / (fov2);
     m[2][2] = - (zFar + zNear) / (zFar - zNear);
     m[2][3] = - static_cast<T>(1);
