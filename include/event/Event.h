@@ -147,6 +147,7 @@ struct hash<prism::Event> {
         case prism::EventType::FOCUS:
         case prism::EventType::MOUSE:
         case prism::EventType::MOUSE_MOVE:
+        case prism::EventType::SIZE:
         case prism::EventType::NONE:
         default:
             hashResult = prism::hash(event.getEventType());

@@ -1,17 +1,5 @@
 #include "graphics/win32/Win32Window.h"
 
-std::unordered_map<HWND, std::queue<prism::Event>> eventMap;
-// holds state of keys and mouse buttons, incrementing if != 0 for each time pollWindow is called
-    // resets to 0 if key or mouse button released
-    // sets to 0 if key or mouse button is pressed
-    // possible with vector that keeps track of currently pressed ONLY, for optimization
-std::unordered_map<HWND, std::unordered_map<prism::KeyId, int>> keyStateMap;
-std::unordered_map<HWND, std::set<prism::KeyId>> heldKeysSet;
-std::unordered_map<HWND, std::unordered_map<prism::MouseButton, int>> mouseButtonStateMap;
-std::unordered_map<HWND, std::set<prism::MouseButton>> heldMouseButtonsSet;
-long debugCounter = 0;
-std::unordered_map<HWND, int> debugCounterMap;
-
 float mouseEventPreviousX;
 float mouseEventPreviousY;
 
@@ -144,148 +132,15 @@ prism::KeyId getKeyFromCode(WPARAM keyCode) {
  * windows event callback function
 */
 LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    LRESULT result = 0;
-    
-    static std::set<WPARAM> currentlyPressed{};
 
-    // mouse location and other info from lParam, wParam, will only be used if applicable
-    short mouseX = (short)LOWORD(lParam);
-    short mouseY = (short)HIWORD(lParam);
-    float wheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam));
-
-    switch (uMsg) {
-        case WM_SETFOCUS:
-            // got focus
-            eventMap[hwnd].push(prism::FocusEvent(prism::EventState::ON));
-            break;
-        case WM_KILLFOCUS:
-            // lost focus
-            eventMap[hwnd].push(prism::FocusEvent(prism::EventState::OFF));
-            // reset key holds and add corresponding keyup messages
-            keyStateMap[hwnd].clear();
-            for (prism::KeyId keyId : heldKeysSet[hwnd]) {
-                eventMap[hwnd].push(prism::KeyEvent(keyId, prism::EventState::UP));
-            }
-            heldKeysSet[hwnd].clear();
-            // reset mouse holds and add corresponding mousebuttonup messages
-            mouseButtonStateMap[hwnd].clear();
-            POINT mousePoint;
-            if (GetCursorPos(&mousePoint)) {
-                for (prism::MouseButton mb : heldMouseButtonsSet[hwnd]) {
-                    eventMap[hwnd].push(prism::MouseButtonEvent(mb, prism::EventState::UP, static_cast<short>(mousePoint.x), static_cast<short>(mousePoint.y)));
-                }
-            }
-            heldMouseButtonsSet[hwnd].clear();
-            break;
-        case WM_SIZE:
-            // width = LOWORD(lParam), height = HIWORD(lParam)
-            eventMap[hwnd].push(prism::SizeEvent(LOWORD(lParam), HIWORD(lParam)));
-            break;
-        case WM_CLOSE: 
-            eventMap[hwnd].push(prism::ExitEvent());
-            break;
-        // keyboard events
-        case WM_KEYDOWN:
-        {
-            prism::KeyId keyId = getKeyFromCode(wParam);
-            if (!heldKeysSet[hwnd].contains(keyId)) {
-                eventMap[hwnd].push(prism::KeyEvent(keyId, prism::EventState::DOWN));
-                keyStateMap[hwnd][keyId] = 0;
-                currentlyPressed.emplace(wParam);
-                heldKeysSet[hwnd].emplace(keyId);
-            }
-            break;
-        }
-        case WM_KEYUP:
-        {
-            prism::KeyId keyId = getKeyFromCode(wParam);
-            eventMap[hwnd].push(prism::KeyEvent(keyId, prism::EventState::UP));
-            keyStateMap[hwnd][keyId] = 0;
-            currentlyPressed.erase(wParam);
-            heldKeysSet[hwnd].erase(keyId);
-            break;
-        }
-        // mouse button events:
-        case WM_LBUTTONDOWN:
-            eventMap[hwnd].push(prism::MouseButtonEvent(prism::MouseButton::LEFT, prism::EventState::DOWN, mouseX, mouseY));
-            heldMouseButtonsSet[hwnd].emplace(prism::MouseButton::LEFT);
-            mouseButtonStateMap[hwnd][prism::MouseButton::LEFT] = 0;
-            break;
-        case WM_LBUTTONUP:
-            eventMap[hwnd].push(prism::MouseButtonEvent(prism::MouseButton::LEFT, prism::EventState::UP, mouseX, mouseY));
-            heldMouseButtonsSet[hwnd].erase(prism::MouseButton::LEFT);
-            mouseButtonStateMap[hwnd][prism::MouseButton::LEFT] = 0;
-            break;
-        case WM_RBUTTONDOWN:
-            eventMap[hwnd].push(prism::MouseButtonEvent(prism::MouseButton::RIGHT, prism::EventState::DOWN, mouseX, mouseY));
-            heldMouseButtonsSet[hwnd].emplace(prism::MouseButton::RIGHT);
-            mouseButtonStateMap[hwnd][prism::MouseButton::RIGHT] = 0;
-            break;
-        case WM_RBUTTONUP:
-            eventMap[hwnd].push(prism::MouseButtonEvent(prism::MouseButton::RIGHT, prism::EventState::UP, mouseX, mouseY));
-            heldMouseButtonsSet[hwnd].erase(prism::MouseButton::RIGHT);
-            mouseButtonStateMap[hwnd][prism::MouseButton::RIGHT] = 0;
-            break;
-        case WM_MBUTTONDOWN:
-            eventMap[hwnd].push(prism::MouseButtonEvent(prism::MouseButton::MIDDLE, prism::EventState::DOWN, mouseX, mouseY));
-            heldMouseButtonsSet[hwnd].emplace(prism::MouseButton::MIDDLE);
-            mouseButtonStateMap[hwnd][prism::MouseButton::MIDDLE] = 0;
-            break;
-        case WM_MBUTTONUP:
-            eventMap[hwnd].push(prism::MouseButtonEvent(prism::MouseButton::MIDDLE, prism::EventState::UP, mouseX, mouseY));
-            heldMouseButtonsSet[hwnd].erase(prism::MouseButton::MIDDLE);
-            mouseButtonStateMap[hwnd][prism::MouseButton::MIDDLE] = 0;
-            break;
-        case WM_XBUTTONDOWN:
-            if (wParam & MK_XBUTTON1) {
-                eventMap[hwnd].push(prism::MouseButtonEvent(prism::MouseButton::MB4, prism::EventState::DOWN, mouseX, mouseY));
-                heldMouseButtonsSet[hwnd].emplace(prism::MouseButton::MB4);
-                mouseButtonStateMap[hwnd][prism::MouseButton::MB4] = 0;
-            } else if (wParam & MK_XBUTTON2) {
-                eventMap[hwnd].push(prism::MouseButtonEvent(prism::MouseButton::MB5, prism::EventState::DOWN, mouseX, mouseY));
-                heldMouseButtonsSet[hwnd].emplace(prism::MouseButton::MB5);
-                mouseButtonStateMap[hwnd][prism::MouseButton::MB5] = 0;
-            }
-            break;
-        case WM_XBUTTONUP:
-            if ((wParam >> 16) & XBUTTON1) {
-                eventMap[hwnd].push(prism::MouseButtonEvent(prism::MouseButton::MB4, prism::EventState::UP, mouseX, mouseY));
-                heldMouseButtonsSet[hwnd].erase(prism::MouseButton::MB4);
-                mouseButtonStateMap[hwnd][prism::MouseButton::MB4] = 0;
-            } else if ((wParam >> 16) & XBUTTON2) {
-                eventMap[hwnd].push(prism::MouseButtonEvent(prism::MouseButton::MB5, prism::EventState::UP, mouseX, mouseY));
-                heldMouseButtonsSet[hwnd].erase(prism::MouseButton::MB5);
-                mouseButtonStateMap[hwnd][prism::MouseButton::MB5] = 0;
-            }
-            break;
-        case WM_MOUSEWHEEL:
-            eventMap[hwnd].push(prism::MouseScrollEvent(wheelDelta, mouseX, mouseY));
-            break;
-        case WM_INPUT: 
-        // https://learn.microsoft.com/en-us/windows/win32/dxtecharts/taking-advantage-of-high-dpi-mouse-movement
-        {
-            UINT dwSize = sizeof(RAWINPUT);
-            static BYTE lpb[sizeof(RAWINPUT)];
-
-            GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
-
-            RAWINPUT* raw = (RAWINPUT*)lpb;
-
-            if (raw->header.dwType == RIM_TYPEMOUSE) 
-            {
-                int xPosRelative = raw->data.mouse.lLastX;
-                int yPosRelative = raw->data.mouse.lLastY;
-
-                eventMap[hwnd].push(prism::MouseMoveEvent(xPosRelative, yPosRelative, xPosRelative, yPosRelative));
-            } 
-            break;
-        }
-        default:
-            result = DefWindowProc(hwnd, uMsg, wParam, lParam);
-            break;
+    // when window is starting to process event messages and button/key presses
+    prism::Win32Window* windowInstance = reinterpret_cast<prism::Win32Window*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    if (windowInstance) {
+        return windowInstance->handleWindowsMessage(uMsg, wParam, lParam);
     }
 
-    return result;
+    // default processing for messages before the creation of the window object
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
 namespace prism {
@@ -416,6 +271,9 @@ Win32Window::Win32Window(std::string windowName, std::uint32_t width, std::uint3
         Logger::info("Win32Window::Win32Window", "Successfully created window.");
     }
 
+    // hwnd window is good, associate this object pointer with it to allow it to handle event messages
+    SetWindowLongPtr(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
     // resize window with dpi and scale
     const int scWidth = GetSystemMetrics(SM_CXSCREEN);
     const int scHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -507,21 +365,14 @@ std::optional<Event> Win32Window::pollWindow() {
 
     std::optional<Event> event;
     // get event queue
-    if (eventMap.find(window) != eventMap.end()) {
-        if (!eventMap[window].empty()) {
-            event = eventMap[window].front();
-            eventMap[window].pop();
-        }
-    } else {
-        prism::Logger::error("Win32Window", "Unable to get Event queue");
+    if (!eventQueue.empty()) {
+        event = eventQueue.front();
+        eventQueue.pop_front();
     }
 
     // iterate to count number of ticks a key/mouse button is pressed
-    for (prism::KeyId keyId : heldKeysSet[window]) {
-        keyStateMap[window][keyId] += 1;
-    }
-    for (prism::MouseButton mb : heldMouseButtonsSet[window]) {
-        mouseButtonStateMap[window][mb] += 1;
+    for (int i = 0; i < KEY_ID_MAX_SIZE; i++) {
+        if (heldState[i]) uiState[i] += 1; // no need to lock mutex, since this only happens in the same thread that writes to it.
     }
 
     // interception of events (like focus events) before returning
@@ -546,13 +397,11 @@ std::optional<Event> Win32Window::pollWindow() {
 }
 
 bool Win32Window::isKeyPressed(KeyId key) {
-    std::set<prism::KeyId> *keySet = &heldKeysSet[window];
-    return keySet->find(key) != keySet->end();
+    return heldState[(std::uint32_t)key];
 }
 
 bool Win32Window::isMousePressed(MouseButton mouseButton) {
-    std::set<prism::MouseButton> *mouseSet = &heldMouseButtonsSet[window];
-    return mouseSet->find(mouseButton) != mouseSet->end();
+    return heldState[(std::uint32_t)mouseButton];
 }
 
 HDC Win32Window::getDeviceContext() const {
@@ -570,6 +419,161 @@ std::uint32_t Win32Window::getDpi() const {
 std::uint32_t Win32Window::getScreenScale() const {
     // default 100% scaling is 96dpi
     return static_cast<std::uint32_t>(std::ceil(static_cast<float>(getDpi() / 96.0f)));
+}
+
+LRESULT Win32Window::handleWindowsMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    LRESULT result = 0;
+
+    // mouse location and other info from lParam, wParam, will only be used if applicable
+    short mouseX = (short)LOWORD(lParam);
+    short mouseY = (short)HIWORD(lParam);
+    float wheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam));
+
+    static bool isResizing = false;
+    static std::uint32_t resizeWidth;
+    static std::uint32_t resizeHeight;
+
+    switch (uMsg) {
+        case WM_SETFOCUS:
+            // got focus
+            eventQueue.push_back(prism::FocusEvent(prism::EventState::ON));
+            break;
+        case WM_KILLFOCUS:
+            // lost focus
+            eventQueue.push_back(prism::FocusEvent(prism::EventState::OFF));
+            // reset key holds and add corresponding keyup messages
+            memset(uiState, 0, sizeof(uiState));
+            for (int i = (int)KeyId::NONE; i < KEY_ID_MAX_SIZE; i++) {
+                if (heldState[i]) eventQueue.push_back(prism::KeyEvent(KeyId(i), prism::EventState::UP));
+            }
+            // reset mouse holds and add corresponding mousebuttonup messages
+            POINT mousePoint;
+            if (GetCursorPos(&mousePoint)) {
+                for (int i = (int)MouseButton::LEFT; i <= (int)MouseButton::MB5; i++) {
+                    if (heldState[i]) eventQueue.push_back(prism::MouseButtonEvent(MouseButton(i), prism::EventState::UP, static_cast<short>(mousePoint.x), static_cast<short>(mousePoint.y)));
+                }
+            }
+            memset(heldState, false, sizeof(heldState));
+            break;
+        case WM_ENTERSIZEMOVE:
+            isResizing = true;
+            break;
+        case WM_SIZE:
+            // width = LOWORD(lParam), height = HIWORD(lParam)
+            resizeWidth = LOWORD(lParam);
+            resizeHeight = HIWORD(lParam);
+            if (!isResizing) {
+                // maximizing, minimizing, other types of size changes
+                eventQueue.push_back(prism::SizeEvent(resizeWidth, resizeHeight));
+            }
+            break;
+        case WM_EXITSIZEMOVE:
+            isResizing = false;
+            eventQueue.push_back(prism::SizeEvent(resizeWidth, resizeHeight));
+            break;
+        case WM_CLOSE: 
+            eventQueue.push_back(prism::ExitEvent());
+            break;
+        // keyboard events
+        case WM_KEYDOWN:
+        {
+            prism::KeyId keyId = getKeyFromCode(wParam);
+            if (!heldState[(std::uint32_t)keyId]) {
+                eventQueue.push_back(prism::KeyEvent(keyId, prism::EventState::DOWN));
+                uiState[(std::uint32_t)keyId] = 0;
+                heldState[(std::uint32_t)keyId] = true;
+            }
+            break;
+        }
+        case WM_KEYUP:
+        {
+            prism::KeyId keyId = getKeyFromCode(wParam);
+            eventQueue.push_back(prism::KeyEvent(keyId, prism::EventState::UP));
+            uiState[(std::uint32_t)keyId] = 0;
+            heldState[(std::uint32_t)keyId] = false;
+            break;
+        }
+        // mouse button events:
+        case WM_LBUTTONDOWN:
+            eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::LEFT, prism::EventState::DOWN, mouseX, mouseY));
+            heldState[(std::uint32_t)prism::MouseButton::LEFT] = true;
+            uiState[(std::uint32_t)prism::MouseButton::LEFT] = 0;
+            break;
+        case WM_LBUTTONUP:
+            eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::LEFT, prism::EventState::UP, mouseX, mouseY));
+            heldState[(std::uint32_t)prism::MouseButton::LEFT] = false;
+            uiState[(std::uint32_t)prism::MouseButton::LEFT] = 0;
+            break;
+        case WM_RBUTTONDOWN:
+            eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::RIGHT, prism::EventState::DOWN, mouseX, mouseY));
+            heldState[(std::uint32_t)prism::MouseButton::RIGHT] = true;
+            uiState[(std::uint32_t)prism::MouseButton::RIGHT] = 0;
+            break;
+        case WM_RBUTTONUP:
+            eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::RIGHT, prism::EventState::UP, mouseX, mouseY));
+            heldState[(std::uint32_t)prism::MouseButton::RIGHT] = false;
+            uiState[(std::uint32_t)prism::MouseButton::RIGHT] = 0;
+            break;
+        case WM_MBUTTONDOWN:
+            eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::MIDDLE, prism::EventState::DOWN, mouseX, mouseY));
+            heldState[(std::uint32_t)prism::MouseButton::MIDDLE] = true;
+            uiState[(std::uint32_t)prism::MouseButton::MIDDLE] = 0;
+            break;
+        case WM_MBUTTONUP:
+            eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::MIDDLE, prism::EventState::UP, mouseX, mouseY));
+            heldState[(std::uint32_t)prism::MouseButton::MIDDLE] = false;
+            uiState[(std::uint32_t)prism::MouseButton::MIDDLE] = 0;
+            break;
+        case WM_XBUTTONDOWN:
+            if (wParam & MK_XBUTTON1) {
+                eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::MB4, prism::EventState::DOWN, mouseX, mouseY));
+                heldState[(std::uint32_t)prism::MouseButton::MB4] = true;
+                uiState[(std::uint32_t)prism::MouseButton::MB4] = 0;
+            } else if (wParam & MK_XBUTTON2) {
+                eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::MB5, prism::EventState::DOWN, mouseX, mouseY));
+                heldState[(std::uint32_t)prism::MouseButton::MB5] = true;
+                uiState[(std::uint32_t)prism::MouseButton::MB5] = 0;
+            }
+            break;
+        case WM_XBUTTONUP:
+            if ((wParam >> 16) & XBUTTON1) {
+                eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::MB4, prism::EventState::UP, mouseX, mouseY));
+                heldState[(std::uint32_t)prism::MouseButton::MB4] = false;
+                uiState[(std::uint32_t)prism::MouseButton::MB4] = 0;
+            } else if ((wParam >> 16) & XBUTTON2) {
+                eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::MB5, prism::EventState::UP, mouseX, mouseY));
+                heldState[(std::uint32_t)prism::MouseButton::MB5] = false;
+                uiState[(std::uint32_t)prism::MouseButton::MB5] = 0;
+            }
+            break;
+        case WM_MOUSEWHEEL:
+            eventQueue.push_back(prism::MouseScrollEvent(wheelDelta, mouseX, mouseY));
+            break;
+        case WM_INPUT: 
+        // https://learn.microsoft.com/en-us/windows/win32/dxtecharts/taking-advantage-of-high-dpi-mouse-movement
+        {
+            UINT dwSize = sizeof(RAWINPUT);
+            static BYTE lpb[sizeof(RAWINPUT)];
+
+            GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
+
+            RAWINPUT* raw = (RAWINPUT*)lpb;
+
+            if (raw->header.dwType == RIM_TYPEMOUSE) 
+            {
+                int xPosRelative = raw->data.mouse.lLastX;
+                int yPosRelative = raw->data.mouse.lLastY;
+
+                eventQueue.push_back(prism::MouseMoveEvent(xPosRelative, yPosRelative, xPosRelative, yPosRelative));
+            } 
+            break;
+        }
+        default:
+            result = DefWindowProc(window, uMsg, wParam, lParam);
+            break;
+    }
+
+    return result;
 }
 
 Win32Window::~Win32Window() {

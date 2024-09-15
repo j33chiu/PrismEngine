@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <functional>
 #include <thread>
+#include <deque>
 
 #include "core/Controller.h"
 #include "event/Event.h"
@@ -46,6 +47,7 @@ public:
 
     std::uint32_t getWidth();
     std::uint32_t getHeight();
+    void updateSize(const uint32_t width, const uint32_t height);
     virtual std::uint32_t getScreenScale() const = 0;
 
     bool getHasPrismFocus();
@@ -62,6 +64,16 @@ protected:
     bool hasPrismFocus = false;
 
     GraphicsSettings graphicsSettings;
+
+    // event queues and key and button mappings for user interaction
+    // uiState holds state of keys and mouse buttons, incrementing if != 0 for each time pollWindow is called
+        // resets to 0 if key or mouse button released
+        // sets to 0 if key or mouse button is pressed
+    // heldState indicates whether or not a key is currently being pressed/held
+    std::deque<Event> eventQueue;
+    std::atomic<int> uiState[KEY_ID_MAX_SIZE] = {0};
+    std::atomic<bool> heldState[KEY_ID_MAX_SIZE] = {false};
+
     
 private: 
     std::function<void(Window*)> prismGrabFocusCallback;

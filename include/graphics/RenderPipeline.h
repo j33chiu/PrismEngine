@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "graphics/RenderStep.h"
 #include "graphics/Scene.h"
@@ -14,9 +15,11 @@ namespace prism {
 class RenderPipeline {
 
 public:
-    RenderPipeline(std::uint32_t width, std::uint32_t height);
+    RenderPipeline(const uint32_t width, const uint32_t height);
 
     ~RenderPipeline() = default;
+
+    void updateCameraSize(const uint32_t width, const uint32_t height);
 
     Scene* createNewScene(bool setCurrent = true);
 
@@ -50,6 +53,8 @@ public:
 
 private:
     // necessary data structures to create RenderStep objects and build the renderqueue
+    std::unordered_set<PrismId> cameraIds;
+
     std::unordered_map<PrismId, std::unique_ptr<Scene>> sceneMap;
     std::unordered_map<PrismId, std::unique_ptr<Camera>> cameraMap;
 

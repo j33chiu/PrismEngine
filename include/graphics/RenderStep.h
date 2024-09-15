@@ -46,7 +46,7 @@ private:
     const RenderObject* renderObject;
     const Material* material;
 
-    // todo: add target of render
+    // TODO: add target of render
 
 };
 

@@ -46,7 +46,7 @@ mat<4, 4, T> frustrum(T left, T right, T bottom, T top, T near, T far) {
 }*/
 
 template<typename T>
-// fov should be radians, this is a right-handed perspective matrix
+// fov should be radians, this is a right-handed perspective matrix for opengl
 mat<4, 4, T> perspective(T fovRad, T aspectRatio, T zNear, T zFar) {
     assert(std::abs(aspectRatio - std::numeric_limits<T>::epsilon()) > static_cast<T>(0));
     T const fov2 = tan(fovRad / static_cast<T>(2));

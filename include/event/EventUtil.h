@@ -6,7 +6,9 @@
 
 namespace prism {
 
-enum class EventType : std::uint8_t {
+// ranges from 0U to 220U
+
+enum class EventType : std::uint32_t {
     NONE = 0U,
     EXIT,
     FOCUS,
@@ -18,14 +20,14 @@ enum class EventType : std::uint8_t {
     SIZE
 };
 
-enum class EventState : std::uint8_t {
+enum class EventState : std::uint32_t {
     UP = 10U,             // key, mouse button and mouse scroll states
     DOWN,           // key, mouse button and mouse scroll states
     ON,             // focus events
     OFF             // focus events
 };
 
-enum class MouseButton : std::uint8_t {
+enum class MouseButton : std::uint32_t {
     LEFT = 20U,
     MIDDLE,
     RIGHT,
@@ -44,5 +46,7 @@ enum class KeyId : std::uint32_t {
     VOL_UP, VOL_DN, MUTE, 
     NP_DECIMAL, NP_MULT, NP_DIV, NP_PLUS, NP_MINUS, NP_CLEAR, NP_ENTER, NP_EQ, NP0, NP1, NP2, NP3, NP4, NP5, NP6, NP7, NP8, NP9
 };
+
+#define KEY_ID_MAX_SIZE ((std::uint32_t)KeyId::NP9 + 1)
 
 }

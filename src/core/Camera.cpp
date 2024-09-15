@@ -20,6 +20,7 @@ PrismId Camera::getId() const {
 }
 
 void Camera::updateCamMatrix() {
+    // TODO: depending on graphics api, the perspective and ortho matrices can be different (and also use different RH/LH conventions)
     switch(type) {
         default:
         case CameraType::PERSPECTIVE:

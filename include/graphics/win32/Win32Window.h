@@ -12,6 +12,8 @@
 #include <Windows.h>
 #include <cstdint>
 
+#define WM_USER_RELEASEDC (WM_USER + 1)     // custom releaseDC callback for thread
+
 namespace prism {
 
 class Win32Window : public Window {
@@ -34,6 +36,8 @@ public:
     HDC getDeviceContext() const;
     std::uint32_t getDpi() const;
     std::uint32_t getScreenScale() const override;
+
+    LRESULT handleWindowsMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 protected:
     AutoHInstance instance;

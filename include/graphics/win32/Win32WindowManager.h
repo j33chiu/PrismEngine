@@ -11,7 +11,7 @@ namespace prism {
 class Win32WindowManager : public WindowManager {
 
 public:
-    ~Win32WindowManager() override = default;
+    ~Win32WindowManager() override;
     Win32WindowManager();
     Win32WindowManager(Platform selectedPlatformInfo);
 
@@ -25,6 +25,8 @@ private:
         prism::DevicePlatform::WINDOWS,
         prism::GraphicsApi::OPENGL
     };
+
+    void createWindowThreaded(std::string windowName, std::uint32_t width, std::uint32_t height, int windowId) override;
 };
 
 }

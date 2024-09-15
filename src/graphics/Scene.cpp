@@ -10,7 +10,7 @@ Scene::Scene()
 
 RenderObject* Scene::addObject(const Material* material, std::unique_ptr<RenderObject> obj) {
     assert(material != nullptr);
-    // todo: if material is nullptr, use default material (if set by user)
+    // TODO: if material is nullptr, use default material (if set by user)
 
     objects.emplace_back(material, std::move(obj));
 

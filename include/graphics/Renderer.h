@@ -12,7 +12,7 @@ class Renderer {
 
 public:
 
-    Renderer();
+    Renderer(const uint32_t width, const uint32_t height);
 
     virtual ~Renderer() = default;
 
@@ -21,6 +21,8 @@ public:
     virtual void setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline);
 
     virtual RenderPipeline* getRenderPipeline() const;
+
+    void updateSize(const uint32_t width, const uint32_t height);
 
 protected:
 
@@ -37,8 +39,10 @@ protected:
     virtual void postRender();
 
     std::unique_ptr<RenderPipeline> pipeline;
-
     std::vector<RenderStep> renderQueue;
+
+    uint32_t width;
+    uint32_t height;
 
 };
 

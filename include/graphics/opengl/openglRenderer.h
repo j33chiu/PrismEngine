@@ -17,7 +17,7 @@ namespace prism {
 class OpenGLRenderer : public Renderer {
 
 public:
-    OpenGLRenderer(std::uint32_t width, std::uint32_t height);
+    OpenGLRenderer(const uint32_t width, const uint32_t height);
     ~OpenGLRenderer() override = default;
 
     void setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline) override;
@@ -28,9 +28,6 @@ protected:
     void frame(RenderStep& step) override;
 
 private:
-    // window width and height
-    std::uint32_t width;
-    std::uint32_t height;
 
     // ubo for camera data (single camera for now)
     std::unique_ptr<UBO> cameraData;

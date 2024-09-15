@@ -46,6 +46,17 @@ std::uint32_t Window::getHeight() {
     return height;
 }
 
+void Window::updateSize(const uint32_t width, const uint32_t height) {
+    this->width = width;
+    this->height = height;
+    // needs to update renderer and the render pipeline
+    if (!renderer) {
+        Logger::error("Window::updateSize", "Renderer unavailable to update...");
+    } else {
+        renderer->updateSize(width, height); // this updates the pipeline too
+    }
+}
+
 bool Window::getHasPrismFocus() {
     return hasPrismFocus;
 }
@@ -72,6 +83,8 @@ void Window::stopRenderThread() {
     renderFlag = false;
     renderThread.join(); // render thread finished
     this->setContext();  // set the context back to current thread
+    // can now release the renderer, cleaning up resources
+    renderer.reset();
 }
 
 bool Window::isRenderThreadRunning() const {

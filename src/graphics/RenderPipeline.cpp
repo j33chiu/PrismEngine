@@ -6,13 +6,24 @@
 
 namespace prism {
 
-RenderPipeline::RenderPipeline(std::uint32_t width, std::uint32_t height) 
+RenderPipeline::RenderPipeline(const uint32_t width, const uint32_t height) 
     : width(width)
     , height(height)
     , renderQueue()
     , sceneMap()
     , cameraMap()
 {}
+
+void RenderPipeline::updateCameraSize(const uint32_t width, const uint32_t height) {
+    this->width = width;
+    this->height = height;
+    // update each camera
+    for (PrismId cameraId : cameraIds) {
+        Camera* camera = getCamera(cameraId);
+        camera->setWidth(width);
+        camera->setHeight(height);
+    }
+}
 
 Scene* RenderPipeline::createNewScene(bool setCurrent) {
     //std::unique_ptr<Scene> newScene = std::make_unique<Scene>();
@@ -62,8 +73,9 @@ PrismId RenderPipeline::getCurrentSceneId() const {
 std::uint32_t getCurrentSceneIdx();
 
 Camera* RenderPipeline::createNewCamera(bool setCurrent) {
-    std::unique_ptr<Camera> newCamera = std::make_unique<Camera>(height, width);
+    std::unique_ptr<Camera> newCamera = std::make_unique<Camera>(width, height);
     PrismId newCameraId = newCamera.get()->getId();
+    cameraIds.insert(newCameraId);
     cameraMap.emplace(newCameraId, std::move(newCamera));
     if (setCurrent) currentCameraId = newCameraId;
     return cameraMap[newCameraId].get();

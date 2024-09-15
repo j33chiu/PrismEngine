@@ -24,7 +24,7 @@ prism::pml::mat4 getTransformation(prism::pml::vec3 pos, prism::pml::FLOAT scale
 
 // helper function to draw renderobject
 void drawObject(const prism::RenderObject* obj) {
-    // note that vao binds can be optimized (todo)
+    // note that vao binds can be optimized (TODO)
     // bind obj vao
     const prism::OpenGLMesh* glMesh = static_cast<const prism::OpenGLMesh*>(obj->getMesh());
     glMesh->getVAO()->bind();
@@ -70,10 +70,8 @@ void drawObject(const prism::RenderObject* obj) {
 
 namespace prism {
 
-OpenGLRenderer::OpenGLRenderer(std::uint32_t width, std::uint32_t height) 
-    : Renderer()
-    , width(width)
-    , height(height)
+OpenGLRenderer::OpenGLRenderer(const uint32_t width, const uint32_t height) 
+    : Renderer(width, height)
     , cameraData()
     , singleObjectData()
     , instancedObjectData()
@@ -147,7 +145,7 @@ void OpenGLRenderer::startPass(RenderStep& step) {
         checkGLError("could not bind default framebuffer");
     }
 
-    // clear target if specified in the step (todo)
+    // clear target if specified in the step (TODO)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     checkGLError("unable to clear");
 

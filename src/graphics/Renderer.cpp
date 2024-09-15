@@ -4,9 +4,11 @@
 
 namespace prism {
 
-Renderer::Renderer()
+Renderer::Renderer(const uint32_t width, const uint32_t height)
     : pipeline()
     , renderQueue()
+    , width(width)
+    , height(height)
 {}
 
 void Renderer::render() {
@@ -59,6 +61,17 @@ void Renderer::frame(RenderStep& step) {
 
 void Renderer::postRender() {
 
+}
+
+void Renderer::updateSize(const uint32_t width, const uint32_t height) {
+    this->width = width;
+    this->height = height;
+    // update pipeline too
+    if (!pipeline) {
+        Logger::error("Renderer::updateSize", "RenderPipeline unavailable to update. If Error appears on startup, can ignore...");
+    } else {
+        pipeline->updateCameraSize(width, height);
+    }
 }
 
 }

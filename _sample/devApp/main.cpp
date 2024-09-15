@@ -25,17 +25,14 @@ void app(int, char**) {
 	// eg: 
 
 
-	// todo: eventually have a class that handles polling, framerate caps, gameticking etc
-	// todo: spawn new threads per window
+	// TODO: eventually have a class that handles polling, framerate caps, gameticking etc
+	// TODO: spawn new threads per window
 
-	auto window1 = prism::PrismRoot::windowManager().createWindow(2560, 1377);
+	auto window1 = prism::PrismRoot::windowManager().createWindow(1900, 600);
 	//auto window2 = prism::PrismRoot::windowManager().createWindow(1000, 900);
 
-	bool running1 = true;
-	//bool running2 = true;
-
 	// debug/testing scene
-	std::unique_ptr<prism::RenderPipeline> win1Pipeline = std::make_unique<prism::RenderPipeline>(2560, 1377);
+	std::unique_ptr<prism::RenderPipeline> win1Pipeline = std::make_unique<prism::RenderPipeline>(1900, 600);
 	prism::Scene* win1Scene = win1Pipeline->createNewScene();
 
 	// create camera and add to pipeline
@@ -137,21 +134,8 @@ void app(int, char**) {
 	//window2->setRenderPipeline(std::move(win2Pipeline));
 
 	window1->startRenderThread();
-	//auto event2 = window2->pollWindow();
-	while (running1) { // || running2) {
-		auto event1 = window1->pollWindow();
-		// catch and pring events (key presses and releases, window focus events)
-		if (event1.has_value()) {
-			if (event1->isExitEvent()) running1 = false; 
-			prism::Event e1 = event1.value();
-			if (e1.getEventType() != prism::EventType::MOUSE_MOVE) {
-				prism::Logger::debug("main", e1);
-				
-			}
-			else {
-				//prism::Logger::debug("main", e1);
-			}
-		}
+	
+	while (prism::PrismRoot::windowManager().hasRunningWindows()) {
 		// check state of keypresses 
 		if (window1->isKeyPressed(prism::KeyId::W)) {
 			camPos.z -= 0.0005f;
@@ -168,8 +152,6 @@ void app(int, char**) {
 		win1Cam->updateCamMatrix();
 	}
 	window1->stopRenderThread();
-	// TODO: currently getting errors of unable to delete vao, shader program, buffers. This is due to multithreading, improper contexts and deallocation in wrong threads idk
-
 }
 
 int main(int argc, char **argv) {
