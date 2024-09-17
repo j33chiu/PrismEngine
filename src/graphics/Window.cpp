@@ -117,4 +117,14 @@ void Window::renderLoop() {
     this->removeContext(); // remove context from render thread, renderloop is done, usually means app shutdown, or stop rendering of scene
 }
 
+bool Window::hasUiEvent() const {
+    return !uiEventQueue.empty();
+}
+
+Event Window::pollUiEvent() {
+    Event e = uiEventQueue.front();
+    uiEventQueue.pop();
+    return e;
+}
+
 }

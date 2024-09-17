@@ -226,7 +226,7 @@ struct vec<3, T> {
         return *this;
     }
 
-	template<typename A>
+	template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> &operator=(A scalar) {
         x = static_cast<T>(scalar);
 		y = static_cast<T>(scalar);
@@ -241,7 +241,7 @@ struct vec<3, T> {
         return *this;
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> &operator+=(A scalar) {
         x += static_cast<T>(scalar);
 		y += static_cast<T>(scalar);
@@ -271,7 +271,7 @@ struct vec<3, T> {
         return *this;
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> &operator-=(A scalar) {
         x -= static_cast<T>(scalar);
 		y -= static_cast<T>(scalar);
@@ -303,7 +303,7 @@ struct vec<3, T> {
         return *this;
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> &operator*=(A scalar) {
         x *= static_cast<T>(scalar);
 		y *= static_cast<T>(scalar);
@@ -328,7 +328,7 @@ struct vec<3, T> {
     }
 
     // element-wise /=
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> &operator/=(A scalar) {
         x /= static_cast<T>(scalar);
 		y /= static_cast<T>(scalar);
@@ -345,7 +345,7 @@ struct vec<3, T> {
     }
 
     // element-wise %=
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> &operator%=(A scalar) {
         x %= scalar;
 		y %= scalar;
@@ -370,7 +370,7 @@ struct vec<3, T> {
         return *this;
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> &operator&=(A scalar) {
         x &= scalar;
 		y &= scalar;
@@ -401,7 +401,7 @@ struct vec<3, T> {
         return *this;
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> &operator|=(A scalar) {
         x |= scalar;
 		y |= scalar;
@@ -431,7 +431,7 @@ struct vec<3, T> {
         return *this;
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> &operator^=(A scalar) {
         x ^= scalar;
 		y ^= scalar;
@@ -461,7 +461,7 @@ struct vec<3, T> {
         return *this;
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> &operator<<=(A scalar) {
         x <<= static_cast<T>(scalar);
 		y <<= static_cast<T>(scalar);
@@ -491,7 +491,7 @@ struct vec<3, T> {
         return *this;
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> &operator>>=(A scalar) {
         x >>= static_cast<T>(scalar);
 		y >>= static_cast<T>(scalar);
@@ -565,7 +565,7 @@ struct vec<3, T> {
 		);
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> operator+(A scalar) const {
         return vec<3, T>(
 			x + static_cast<T>(scalar),
@@ -602,7 +602,7 @@ struct vec<3, T> {
 		);
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> operator-(A scalar) const {
         return vec<3, T>(
 			x - static_cast<T>(scalar),
@@ -639,7 +639,7 @@ struct vec<3, T> {
 		);
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> operator*(A scalar) const {
         return vec<3, T>(
 			x * static_cast<T>(scalar),
@@ -667,7 +667,7 @@ struct vec<3, T> {
     }
 
     // binary division (/)
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> operator/(A scalar) const {
         return vec<3, T>(
 			x / static_cast<T>(scalar),
@@ -686,7 +686,7 @@ struct vec<3, T> {
     }
 
     // binary modulo (%)
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> operator%(A scalar) const {
         return vec<3, T>(
 			x % static_cast<T>(scalar),
@@ -714,7 +714,7 @@ struct vec<3, T> {
 		);
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> operator&(A scalar) const {
         return vec<3, T>(
 			x & static_cast<T>(scalar),
@@ -751,7 +751,7 @@ struct vec<3, T> {
 		);
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> operator|(A scalar) const {
         return vec<3, T>(
 			x | static_cast<T>(scalar),
@@ -788,7 +788,7 @@ struct vec<3, T> {
 		);
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> operator^(A scalar) const {
         return vec<3, T>(
 			x ^ static_cast<T>(scalar),
@@ -825,7 +825,7 @@ struct vec<3, T> {
 		);
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> operator<<(A scalar) const {
         return vec<3, T>(
 			x << static_cast<T>(scalar),
@@ -862,7 +862,7 @@ struct vec<3, T> {
 		);
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr vec<3, T> operator>>(A scalar) const {
         return vec<3, T>(
 			x >> static_cast<T>(scalar),
@@ -896,7 +896,7 @@ struct vec<3, T> {
     }
 
     // boolean and compares
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     bool operator==(A scalar) {
         return 
 			equal(x, static_cast<T>(scalar)) && 
@@ -912,7 +912,7 @@ struct vec<3, T> {
 			equal(z, static_cast<T>(v.z));
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     constexpr bool operator!=(A scalar) {
         return !(*this == scalar);
     }
@@ -972,7 +972,7 @@ struct vec<3, T> {
 };
 
 // scalar <math operation> vec1 overloads:
-template<typename T, typename A>
+template<typename T, typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
 constexpr vec<3, T> operator+(A scalar, vec<3, T> const& v) {
     return vec<3, T>(
 		static_cast<T>(scalar) + v.x,
@@ -999,7 +999,7 @@ constexpr vec<3, T> operator+(vec<2, A> const& v1, vec<3, T> const& v2) {
 	);
 }
 
-template<typename T, typename A>
+template<typename T, typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
 constexpr vec<3, T> operator-(A scalar, vec<3, T> const& v) {
     return vec<3, T>(
 		static_cast<T>(scalar) - v.x,
@@ -1026,7 +1026,7 @@ constexpr vec<3, T> operator-(vec<2, A> const& v1, vec<3, T> const& v2) {
 	);
 }
 
-template<typename T, typename A>
+template<typename T, typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
 constexpr vec<3, T> operator*(A scalar, vec<3, T> const& v) {
     return vec<3, T>(
 		static_cast<T>(scalar) * v.x,
@@ -1053,7 +1053,7 @@ constexpr vec<3, T> operator*(vec<2, A> const& v1, vec<3, T> const& v2) {
 	);
 }
 
-template<typename T, typename A>
+template<typename T, typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
 constexpr vec<3, T> operator/(A scalar, vec<3, T> const& v) {
     return vec<3, T>(
 		static_cast<T>(scalar) / v.x,
@@ -1080,7 +1080,7 @@ constexpr vec<3, T> operator/(vec<2, A> const& v1, vec<3, T> const& v2) {
 	);
 }
 
-template<typename T, typename A>
+template<typename T, typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
 constexpr vec<3, T> operator%(A scalar, vec<3, T> const& v) {
     return vec<3, T>(
 		static_cast<T>(scalar) % v.x,
@@ -1107,7 +1107,7 @@ constexpr vec<3, T> operator%(vec<2, A> const& v1, vec<3, T> const& v2) {
 	);
 }
 
-template<typename T, typename A>
+template<typename T, typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
 constexpr vec<3, T> operator&(A scalar, vec<3, T> const& v) {
     return vec<3, T>(
 		static_cast<T>(scalar) & v.x,
@@ -1134,7 +1134,7 @@ constexpr vec<3, T> operator&(vec<2, A> const& v1, vec<3, T> const& v2) {
 	);
 }
 
-template<typename T, typename A>
+template<typename T, typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
 constexpr vec<3, T> operator|(A scalar, vec<3, T> const& v) {
     return vec<3, T>(
 		static_cast<T>(scalar) | v.x,
@@ -1161,7 +1161,7 @@ constexpr vec<3, T> operator|(vec<2, A> const& v1, vec<3, T> const& v2) {
 	);
 }
 
-template<typename T, typename A>
+template<typename T, typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
 constexpr vec<3, T> operator^(A scalar, vec<3, T> const& v) {
     return vec<3, T>(
 		static_cast<T>(scalar) ^ v.x,
@@ -1189,7 +1189,7 @@ constexpr vec<3, T> operator^(vec<2, A> const& v1, vec<3, T> const& v2) {
 }
 
 
-template<typename T, typename A>
+template<typename T, typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
 constexpr vec<3, T> operator<<(A scalar, vec<3, T> const& v) {
     return vec<3, T>(
 		static_cast<T>(scalar) << v.x,
@@ -1216,7 +1216,7 @@ constexpr vec<3, T> operator<<(vec<2, A> const& v1, vec<3, T> const& v2) {
 	);
 }
 
-template<typename T, typename A>
+template<typename T, typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
 constexpr vec<3, T> operator>>(A scalar, vec<3, T> const& v) {
     return vec<3, T>(
 		static_cast<T>(scalar) >> v.x,

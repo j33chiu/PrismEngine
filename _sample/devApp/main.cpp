@@ -73,9 +73,36 @@ void app(int, char**) {
 		.pos = prism::pml::vec3(-0.5f, -0.5f, -3.0f),
 		.colour = prism::pml::vec4(0.7f, 0.15f, 0.9f, 1.0f)
 	};
+	prism::VertexDataDebug v5 {
+		.pos = prism::pml::vec3(-0.5f,  0.5f, -4.0f),
+		.colour = prism::pml::vec4(0.1f, 0.6f, 0.3f, 1.0f)
+	};
+	prism::VertexDataDebug v6 {
+		.pos = prism::pml::vec3( 0.5f,  0.5f, -4.0f),
+		.colour = prism::pml::vec4(0.3f, 0.2f, 0.5f, 1.0f)
+	};
+	prism::VertexDataDebug v7 {
+		.pos = prism::pml::vec3( 0.5f, -0.5f, -4.0f),
+		.colour = prism::pml::vec4(0.5f, 0.9f, 0.7f, 1.0f)
+	};
+	prism::VertexDataDebug v8 {
+		.pos = prism::pml::vec3(-0.5f, -0.5f, -4.0f),
+		.colour = prism::pml::vec4(0.7f, 0.15f, 0.9f, 1.0f)
+	};
 
 	std::vector<std::uint32_t> win1Indices;
-	win1Indices.insert(win1Indices.end(), {0, 1, 2, 0, 2, 3});
+	win1Indices.insert(win1Indices.end(), {0, 1, 2, // front face
+										   0, 2, 3, 
+										   4, 0, 3, // left face
+										   4, 3, 7,
+										   4, 5, 1,	// top face
+										   4, 1, 0,
+										   1, 5, 6,	// right face
+										   1, 6, 2,
+										   3, 2, 6,	// bottom face
+										   3, 6, 7,
+										   5, 4, 7,	// back face
+										   5, 7, 6});
 
 	// shader program
 	const char* vertexShaderSource = R"(#version 450 core
@@ -118,6 +145,10 @@ void app(int, char**) {
 	win1VerticesContainer->addVertex(&v2);
 	win1VerticesContainer->addVertex(&v3);
 	win1VerticesContainer->addVertex(&v4);
+	win1VerticesContainer->addVertex(&v5);
+	win1VerticesContainer->addVertex(&v6);
+	win1VerticesContainer->addVertex(&v7);
+	win1VerticesContainer->addVertex(&v8);
 	const prism::Mesh* win1Mesh = prism::PrismRoot::meshManager().createMesh(std::move(win1VerticesContainer), win1Indices);
 	
 	// create object using created mesh. define location and primitive draw type
@@ -136,19 +167,56 @@ void app(int, char**) {
 	window1->startRenderThread();
 	
 	while (prism::PrismRoot::windowManager().hasRunningWindows()) {
+		// drain key and mouse events (up/down presses)
+		while (window1->hasUiEvent()) {
+			prism::Event uiEvent = window1->pollUiEvent();
+			prism::EventType type = uiEvent.getEventType();
+			if (type == prism::EventType::KEY) {
+				if (uiEvent.getKeyEvent().has_value()) {
+					prism::KeyId key = uiEvent.getKeyEvent().value().key;
+					if (uiEvent.getKeyEvent().value().keyState == prism::EventState::DOWN) {
+						// pressed key
+						switch (key) {
+							case prism::KeyId::ESC:
+								win1Cam->setFPSMode(!win1Cam->isFPSCamera());
+							 	break;
+							default:
+								break;
+						}
+					} else {
+						// unpressed key
+					}
+				}
+			} else if (type == prism::EventType::MOUSE_MOVE) {
+				if (win1Cam->isFPSCamera()) {
+					// update camera orientation
+					win1Cam->updateFPSOrientationDelta(uiEvent.getMouseMoveEvent().value().dX, uiEvent.getMouseMoveEvent().value().dY);
+					// set cursor to center of screen
+					window1->setCursorPosition(window1->getWidth() / 2, window1->getHeight() / 2);
+				}
+			}
+		}
+
 		// check state of keypresses 
 		if (window1->isKeyPressed(prism::KeyId::W)) {
-			camPos.z -= 0.0005f;
+			win1Cam->moveForwardOrientation(0.0001f);
 		}
 		if (window1->isKeyPressed(prism::KeyId::S)) {
-			camPos.z += 0.0005f;
+			win1Cam->moveBackwardOrientation(0.0001f);
+		}
+		if (window1->isKeyPressed(prism::KeyId::A)) {
+			win1Cam->moveLeftOrientation(0.0001f);
+		}
+		if (window1->isKeyPressed(prism::KeyId::D)) {
+			win1Cam->moveRightOrientation(0.0001f);
 		}
 		if (window1->isKeyPressed(prism::KeyId::SPACE)) {
-			camPos.y = 0.5f;
-		} else {
-			camPos.y = 0.0f;
-		}
-		win1Cam->setPosition(camPos);
+			win1Cam->moveUpOrientation(0.0001f);
+		} 
+		if (window1->isKeyPressed(prism::KeyId::L_SHIFT)) {
+			win1Cam->moveDownOrientation(0.0001f);
+		} 
+		// win1Cam->setPosition(camPos);
 		win1Cam->updateCamMatrix();
 	}
 	window1->stopRenderThread();
@@ -157,9 +225,11 @@ void app(int, char**) {
 int main(int argc, char **argv) {
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
-	prism::initDebug(argc, argv, app, prism::Platform { prism::DevicePlatform::WINDOWS, prism::GraphicsApi::OPENGL });
+	{
+		prism::initDebug(argc, argv, app, prism::Platform { prism::DevicePlatform::WINDOWS, prism::GraphicsApi::OPENGL });
+	}
 
-	//_CrtDumpMemoryLeaks();
+	//_CrtDumpMemoryLeaks(); // shows leaks, likely since helper threads have not actually completed destruction yet (window event thread for example)
 
 	return 0;
 }

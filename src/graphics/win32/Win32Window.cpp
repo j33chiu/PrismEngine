@@ -480,6 +480,7 @@ LRESULT Win32Window::handleWindowsMessage(UINT uMsg, WPARAM wParam, LPARAM lPara
             prism::KeyId keyId = getKeyFromCode(wParam);
             if (!heldState[(std::uint32_t)keyId]) {
                 eventQueue.push_back(prism::KeyEvent(keyId, prism::EventState::DOWN));
+                uiEventQueue.push(prism::KeyEvent(keyId, prism::EventState::DOWN));
                 uiState[(std::uint32_t)keyId] = 0;
                 heldState[(std::uint32_t)keyId] = true;
             }
@@ -489,6 +490,7 @@ LRESULT Win32Window::handleWindowsMessage(UINT uMsg, WPARAM wParam, LPARAM lPara
         {
             prism::KeyId keyId = getKeyFromCode(wParam);
             eventQueue.push_back(prism::KeyEvent(keyId, prism::EventState::UP));
+            uiEventQueue.push(prism::KeyEvent(keyId, prism::EventState::UP));
             uiState[(std::uint32_t)keyId] = 0;
             heldState[(std::uint32_t)keyId] = false;
             break;
@@ -496,41 +498,49 @@ LRESULT Win32Window::handleWindowsMessage(UINT uMsg, WPARAM wParam, LPARAM lPara
         // mouse button events:
         case WM_LBUTTONDOWN:
             eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::LEFT, prism::EventState::DOWN, mouseX, mouseY));
+            uiEventQueue.push(prism::MouseButtonEvent(prism::MouseButton::LEFT, prism::EventState::DOWN, mouseX, mouseY));
             heldState[(std::uint32_t)prism::MouseButton::LEFT] = true;
             uiState[(std::uint32_t)prism::MouseButton::LEFT] = 0;
             break;
         case WM_LBUTTONUP:
             eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::LEFT, prism::EventState::UP, mouseX, mouseY));
+            uiEventQueue.push(prism::MouseButtonEvent(prism::MouseButton::LEFT, prism::EventState::UP, mouseX, mouseY));
             heldState[(std::uint32_t)prism::MouseButton::LEFT] = false;
             uiState[(std::uint32_t)prism::MouseButton::LEFT] = 0;
             break;
         case WM_RBUTTONDOWN:
             eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::RIGHT, prism::EventState::DOWN, mouseX, mouseY));
+            uiEventQueue.push(prism::MouseButtonEvent(prism::MouseButton::RIGHT, prism::EventState::DOWN, mouseX, mouseY));
             heldState[(std::uint32_t)prism::MouseButton::RIGHT] = true;
             uiState[(std::uint32_t)prism::MouseButton::RIGHT] = 0;
             break;
         case WM_RBUTTONUP:
             eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::RIGHT, prism::EventState::UP, mouseX, mouseY));
+            uiEventQueue.push(prism::MouseButtonEvent(prism::MouseButton::RIGHT, prism::EventState::UP, mouseX, mouseY));
             heldState[(std::uint32_t)prism::MouseButton::RIGHT] = false;
             uiState[(std::uint32_t)prism::MouseButton::RIGHT] = 0;
             break;
         case WM_MBUTTONDOWN:
             eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::MIDDLE, prism::EventState::DOWN, mouseX, mouseY));
+            uiEventQueue.push(prism::MouseButtonEvent(prism::MouseButton::MIDDLE, prism::EventState::DOWN, mouseX, mouseY));
             heldState[(std::uint32_t)prism::MouseButton::MIDDLE] = true;
             uiState[(std::uint32_t)prism::MouseButton::MIDDLE] = 0;
             break;
         case WM_MBUTTONUP:
             eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::MIDDLE, prism::EventState::UP, mouseX, mouseY));
+            uiEventQueue.push(prism::MouseButtonEvent(prism::MouseButton::MIDDLE, prism::EventState::UP, mouseX, mouseY));
             heldState[(std::uint32_t)prism::MouseButton::MIDDLE] = false;
             uiState[(std::uint32_t)prism::MouseButton::MIDDLE] = 0;
             break;
         case WM_XBUTTONDOWN:
             if (wParam & MK_XBUTTON1) {
                 eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::MB4, prism::EventState::DOWN, mouseX, mouseY));
+                uiEventQueue.push(prism::MouseButtonEvent(prism::MouseButton::MB4, prism::EventState::DOWN, mouseX, mouseY));
                 heldState[(std::uint32_t)prism::MouseButton::MB4] = true;
                 uiState[(std::uint32_t)prism::MouseButton::MB4] = 0;
             } else if (wParam & MK_XBUTTON2) {
                 eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::MB5, prism::EventState::DOWN, mouseX, mouseY));
+                uiEventQueue.push(prism::MouseButtonEvent(prism::MouseButton::MB5, prism::EventState::DOWN, mouseX, mouseY));
                 heldState[(std::uint32_t)prism::MouseButton::MB5] = true;
                 uiState[(std::uint32_t)prism::MouseButton::MB5] = 0;
             }
@@ -538,16 +548,19 @@ LRESULT Win32Window::handleWindowsMessage(UINT uMsg, WPARAM wParam, LPARAM lPara
         case WM_XBUTTONUP:
             if ((wParam >> 16) & XBUTTON1) {
                 eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::MB4, prism::EventState::UP, mouseX, mouseY));
+                uiEventQueue.push(prism::MouseButtonEvent(prism::MouseButton::MB4, prism::EventState::UP, mouseX, mouseY));
                 heldState[(std::uint32_t)prism::MouseButton::MB4] = false;
                 uiState[(std::uint32_t)prism::MouseButton::MB4] = 0;
             } else if ((wParam >> 16) & XBUTTON2) {
                 eventQueue.push_back(prism::MouseButtonEvent(prism::MouseButton::MB5, prism::EventState::UP, mouseX, mouseY));
+                uiEventQueue.push(prism::MouseButtonEvent(prism::MouseButton::MB5, prism::EventState::UP, mouseX, mouseY));
                 heldState[(std::uint32_t)prism::MouseButton::MB5] = false;
                 uiState[(std::uint32_t)prism::MouseButton::MB5] = 0;
             }
             break;
         case WM_MOUSEWHEEL:
             eventQueue.push_back(prism::MouseScrollEvent(wheelDelta, mouseX, mouseY));
+            uiEventQueue.push(prism::MouseScrollEvent(wheelDelta, mouseX, mouseY));
             break;
         case WM_INPUT: 
         // https://learn.microsoft.com/en-us/windows/win32/dxtecharts/taking-advantage-of-high-dpi-mouse-movement
@@ -565,6 +578,7 @@ LRESULT Win32Window::handleWindowsMessage(UINT uMsg, WPARAM wParam, LPARAM lPara
                 int yPosRelative = raw->data.mouse.lLastY;
 
                 eventQueue.push_back(prism::MouseMoveEvent(xPosRelative, yPosRelative, xPosRelative, yPosRelative));
+                uiEventQueue.push(prism::MouseMoveEvent(xPosRelative, yPosRelative, xPosRelative, yPosRelative));
             } 
             break;
         }
@@ -574,6 +588,21 @@ LRESULT Win32Window::handleWindowsMessage(UINT uMsg, WPARAM wParam, LPARAM lPara
     }
 
     return result;
+}
+
+std::pair<int, int> Win32Window::getCursorPosition() {
+    POINT p;
+    GetCursorPos(&p);
+    ScreenToClient(window, &p);
+    return std::make_pair<int, int>(p.x, p.y);
+}
+
+void Win32Window::setCursorPosition(int x, int y) {
+    POINT p;
+    p.x = x;
+    p.y = y;
+    ClientToScreen(window, &p);
+    SetCursorPos(p.x, p.y);
 }
 
 Win32Window::~Win32Window() {

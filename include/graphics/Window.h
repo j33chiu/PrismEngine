@@ -5,6 +5,7 @@
 #include <functional>
 #include <thread>
 #include <deque>
+#include <queue>
 
 #include "core/Controller.h"
 #include "event/Event.h"
@@ -57,6 +58,13 @@ public:
     void stopRenderThread();
     bool isRenderThreadRunning() const;
 
+    bool hasUiEvent() const;
+    Event pollUiEvent();
+
+    // get/set cursor position relative to the window
+    virtual std::pair<int, int> getCursorPosition() = 0;               // implemented by specific platform
+    virtual void setCursorPosition(int x, int y) = 0;   // implemented by specific platform
+
 protected:
     std::uint32_t width;
     std::uint32_t height;
@@ -71,6 +79,7 @@ protected:
         // sets to 0 if key or mouse button is pressed
     // heldState indicates whether or not a key is currently being pressed/held
     std::deque<Event> eventQueue;
+    std::queue<Event> uiEventQueue;
     std::atomic<int> uiState[KEY_ID_MAX_SIZE] = {0};
     std::atomic<bool> heldState[KEY_ID_MAX_SIZE] = {false};
 

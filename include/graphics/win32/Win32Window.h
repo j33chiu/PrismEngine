@@ -39,6 +39,9 @@ public:
 
     LRESULT handleWindowsMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+    std::pair<int, int> getCursorPosition() override;
+    void setCursorPosition(int x, int y) override;
+
 protected:
     AutoHInstance instance;
     AutoHwnd window;
