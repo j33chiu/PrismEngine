@@ -43,5 +43,6 @@ target_sources(prism PRIVATE
 	InstancedRenderObject.cpp
 	Mesh.cpp
 	MeshManager.cpp
+	Vertex.cpp
 	Window.cpp
 )

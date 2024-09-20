@@ -24,17 +24,23 @@ MaterialManager& PrismRoot::materialManager() {
     return rootInstance().materialManagerImpl();
 }
 
+TextureManager& PrismRoot::textureManager() {
+    return rootInstance().textureManagerImpl();
+}
+
 void PrismRoot::registerGraphicsApi(
     const GraphicsApi& graphicsApi,
     std::unique_ptr<WindowManager> windowManager,
     std::unique_ptr<MeshManager> meshManager,
-    std::unique_ptr<MaterialManager> materialManager
+    std::unique_ptr<MaterialManager> materialManager,
+    std::unique_ptr<TextureManager> textureManager
 ) {
     return rootInstance().registerGraphicsApiImpl(
         graphicsApi,
         std::move(windowManager),
         std::move(meshManager),
-        std::move(materialManager)
+        std::move(materialManager),
+        std::move(textureManager)
     );
 }
 
@@ -54,16 +60,22 @@ MaterialManager& PrismRoot::materialManagerImpl() const {
     return *graphicsManagers.at(currentGraphicsApi).materialManager;
 }
 
+TextureManager& PrismRoot::textureManagerImpl() const {
+    return *graphicsManagers.at(currentGraphicsApi).textureManager;
+}
+
 void PrismRoot::registerGraphicsApiImpl(
     const GraphicsApi& graphicsApi,
     std::unique_ptr<WindowManager> windowManager,
     std::unique_ptr<MeshManager> meshManager,
-    std::unique_ptr<MaterialManager> materialManager
+    std::unique_ptr<MaterialManager> materialManager,
+    std::unique_ptr<TextureManager> textureManager
 ) {
     GraphicsManagers m {
         std::move(windowManager),
         std::move(meshManager),
-        std::move(materialManager)
+        std::move(materialManager),
+        std::move(textureManager)
     };
 
     graphicsManagers[graphicsApi] = std::move(m);

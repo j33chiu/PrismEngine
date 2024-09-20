@@ -7,6 +7,7 @@
 #include "graphics/WindowManager.h"
 #include "graphics/MeshManager.h"
 #include "graphics/MaterialManager.h"
+#include "graphics/TextureManager.h"
 
 #include <memory>
 
@@ -24,13 +25,15 @@ public:
     static WindowManager& windowManager();
     static MeshManager& meshManager();
     static MaterialManager& materialManager();
+    static TextureManager& textureManager();
 
     // public static set methods for application-wide managers
     static void registerGraphicsApi(
         const GraphicsApi& graphicsApi,
         std::unique_ptr<WindowManager> windowManager,
         std::unique_ptr<MeshManager> meshManager,
-        std::unique_ptr<MaterialManager> materialManager
+        std::unique_ptr<MaterialManager> materialManager,
+        std::unique_ptr<TextureManager> textureManager
     );
 
     // reset
@@ -45,12 +48,14 @@ private:
     WindowManager& windowManagerImpl() const;
     MeshManager& meshManagerImpl() const;
     MaterialManager& materialManagerImpl() const;
+    TextureManager& textureManagerImpl() const;
 
     void registerGraphicsApiImpl(
         const GraphicsApi& graphicsApi,
         std::unique_ptr<WindowManager> windowManager,
         std::unique_ptr<MeshManager> meshManager,
-        std::unique_ptr<MaterialManager> materialManager
+        std::unique_ptr<MaterialManager> materialManager,
+        std::unique_ptr<TextureManager> textureManager
     );
 
     void stopImpl();
@@ -59,6 +64,7 @@ private:
         std::unique_ptr<WindowManager> windowManager;
         std::unique_ptr<MeshManager> meshManager;
         std::unique_ptr<MaterialManager> materialManager;
+        std::unique_ptr<TextureManager> textureManager;
     };
 
     std::unordered_map<GraphicsApi, GraphicsManagers> graphicsManagers;

@@ -1,8 +1,5 @@
 #pragma once
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "util/files/stb_image.h"
-
 #include <string>
 #include <vector>
 #include <memory>
@@ -30,6 +27,7 @@ public:
                            const std::vector<std::byte>& bytes, 
                            std::uint32_t width, 
                            std::uint32_t height,
+                           std::uint8_t channels,
                            const TextureSampler* textureSampler);
 
     std::uint32_t getAvailableTextureId();
@@ -48,32 +46,29 @@ public:
 protected:
     // to be implemented by graphics api
 
-    // textures: api-specific creation and deletion needed
+    // textures: api-specific creation
     virtual std::unique_ptr<Texture> createUniqueTexture(TextureUse textureUsage, 
                                                          const std::vector<std::byte>& bytes, 
                                                          std::uint32_t width, 
                                                          std::uint32_t height,
+                                                         std::uint8_t channels,
                                                          const TextureSampler* textureSampler,
                                                          std::uint32_t textureId) = 0;
 
-    virtual void deleteTexture(const Texture* texture) = 0;
-
-    // texture samplers: api-specific creation and deletion needed
+    // texture samplers: api-specific creation
     virtual std::unique_ptr<TextureSampler> createUniqueSampler(const TextureSamplerAttributes& samplerAttributes,
                                                                 std::uint32_t samplerId) = 0;
 
-    virtual void deleteSampler(const TextureSampler* sampler) = 0;
-
 private:
-    std::uint32_t textureIdCounter;
-    std::unordered_map<std::size_t, std::tuple<std::uint32_t, std::unique_ptr<Texture>>> texturesMap;
+    // list of textures, their id corresponds to their index in the list
+    std::vector<std::tuple<std::unique_ptr<Texture>, int>> texturesList;
+    // set of loaded textures by texture file name, ensuring we do not double load textures
+    std::unordered_map<std::string, int> loadedTexturesMap;
 
-    std::uint32_t samplerIdCounter;
-    std::unordered_map<TextureSamplerAttributes, std::tuple<std::uint32_t, std::unique_ptr<TextureSampler>>> samplersMap;
-
-                                                        
-
-
+    // list of texture samplers, their id corresponds to their index in the list
+    std::vector<std::tuple<std::unique_ptr<TextureSampler>, int>> textureSamplersList;
+    // set of loaded texture samplers by attributes, ensuring we do not double create samplers with the same attributes
+    std::unordered_map<TextureSamplerAttributes, int> loadedTextureSamplersMap;                                                     
 };
 
 }

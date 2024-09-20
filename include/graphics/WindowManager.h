@@ -33,7 +33,7 @@ protected:
     // for window events, we start the window in a separate helper thread from the render and game loop threads
     // this thread polls for window events and updates a shared window resource that the game loop and render threads can access if needed
     std::vector<bool> windowThreadsRunning;
-    std::vector<bool> windowCanBeDestroyed;
+    std::vector<std::shared_ptr<std::atomic<bool>>> windowCanBeDestroyed;
     std::vector<std::thread> windowThreads;
 
     virtual void createWindowThreaded(std::string windowName, std::uint32_t width, std::uint32_t height, int windowId) = 0;

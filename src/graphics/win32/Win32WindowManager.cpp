@@ -21,7 +21,8 @@ Window *Win32WindowManager::createWindow(std::string windowName, std::uint32_t w
     // increase size of windowsList vector by 1
     windowsList.push_back(nullptr);
     windowThreadsRunning.push_back(true);
-    windowCanBeDestroyed.push_back(false);
+    windowCanBeDestroyed.resize(windowCanBeDestroyed.size() + 1);
+    windowCanBeDestroyed[windowCanBeDestroyed.size() - 1] = std::make_shared<std::atomic<bool>>(false);
     windowThreads.push_back(std::thread(&Win32WindowManager::createWindowThreaded, this, windowName, width, height, windowIdCounter));
     currentWindowIndex = windowIdCounter;
     windowIdCounter++;
@@ -78,14 +79,14 @@ void Win32WindowManager::createWindowThreaded(std::string windowName, std::uint3
     windowThreadsRunning[windowId] = false;
 
     // works with the destructor to ensure this thread calls ReleaseDC and DestroyWindow
-    while (!windowCanBeDestroyed[windowId]);
+    while (!windowCanBeDestroyed[windowId]->load());
     windowsList[windowId].reset();  // ensure proper destruction of window by this thread
     // thread done, can be joined in ~Win32WindowManager() below
 }
 
 Win32WindowManager::~Win32WindowManager() {
     for (int i = 0; i < windowsList.size(); i++) {
-        windowCanBeDestroyed[i] = true;
+        windowCanBeDestroyed[i]->store(true);
     }
     joinAllWindowThreads();
     currentWindow = nullptr;

@@ -6,6 +6,14 @@ GraphicsSettings::GraphicsSettings() {
     // TODO: load from default settings/conf file which we read/write to/from
 }
 
+AntiAliasingSetting GraphicsSettings::getAntiAliasingSetting() {
+    return antiAliasing;
+}
+
+void GraphicsSettings::setAntiAliasingSetting(AntiAliasingSetting setting) {
+    this->antiAliasing = setting;
+}
+
 bool GraphicsSettings::isVsyncEnabled() {
     return vsyncEnabled;
 }

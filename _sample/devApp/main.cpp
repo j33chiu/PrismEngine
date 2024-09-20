@@ -4,6 +4,7 @@
 #include "core/PrismRoot.h"
 #include "core/PrismInit.h"
 #include "logger/Logger.h"
+#include "util/files/FileManager.h"
 
 #include "core/math/pml.h"
 #include "graphics/Scene.h"
@@ -26,10 +27,18 @@ void app(int, char**) {
 
 
 	// TODO: eventually have a class that handles polling, framerate caps, gameticking etc
-	// TODO: spawn new threads per window
 
 	auto window1 = prism::PrismRoot::windowManager().createWindow(1900, 600);
 	//auto window2 = prism::PrismRoot::windowManager().createWindow(1000, 900);
+
+	// set filemanager location (for stuff like loading shaders, textures etc)
+	prism::FileManager fileManager = prism::FileManager::getInstance();
+	fileManager.cd("textures");
+	fileManager.listFiles();
+
+	// texture loading
+	prism::TextureSampler* defaultSampler = prism::PrismRoot::textureManager().getDefaultSampler();
+	prism::Texture* brickTexture = prism::PrismRoot::textureManager().loadTexture("brick.png", prism::TextureUse::IMAGE, defaultSampler);
 
 	// debug/testing scene
 	std::unique_ptr<prism::RenderPipeline> win1Pipeline = std::make_unique<prism::RenderPipeline>(1900, 600);
@@ -55,40 +64,35 @@ void app(int, char**) {
 	// win1Cam2->setOrientation(camOrientation2);
 	// win1Cam2->updateCamMatrix();
 
-	
-	// create square (add object to scene in pipeline)
-	prism::VertexDataDebug v1 {
-		.pos = prism::pml::vec3(-0.5f,  0.5f, -3.0f),
-		.colour = prism::pml::vec4(0.1f, 0.6f, 0.3f, 1.0f)
-	};
-	prism::VertexDataDebug v2 {
-		.pos = prism::pml::vec3( 0.5f,  0.5f, -3.0f),
-		.colour = prism::pml::vec4(0.3f, 0.2f, 0.5f, 1.0f)
-	};
-	prism::VertexDataDebug v3 {
-		.pos = prism::pml::vec3( 0.5f, -0.5f, -3.0f),
-		.colour = prism::pml::vec4(0.5f, 0.9f, 0.7f, 1.0f)
-	};
-	prism::VertexDataDebug v4 {
-		.pos = prism::pml::vec3(-0.5f, -0.5f, -3.0f),
-		.colour = prism::pml::vec4(0.7f, 0.15f, 0.9f, 1.0f)
-	};
-	prism::VertexDataDebug v5 {
-		.pos = prism::pml::vec3(-0.5f,  0.5f, -4.0f),
-		.colour = prism::pml::vec4(0.1f, 0.6f, 0.3f, 1.0f)
-	};
-	prism::VertexDataDebug v6 {
-		.pos = prism::pml::vec3( 0.5f,  0.5f, -4.0f),
-		.colour = prism::pml::vec4(0.3f, 0.2f, 0.5f, 1.0f)
-	};
-	prism::VertexDataDebug v7 {
-		.pos = prism::pml::vec3( 0.5f, -0.5f, -4.0f),
-		.colour = prism::pml::vec4(0.5f, 0.9f, 0.7f, 1.0f)
-	};
-	prism::VertexDataDebug v8 {
-		.pos = prism::pml::vec3(-0.5f, -0.5f, -4.0f),
-		.colour = prism::pml::vec4(0.7f, 0.15f, 0.9f, 1.0f)
-	};
+	// custom vertex description
+	prism::VertexDescriptor vertexDescription;
+	vertexDescription.addVertexComponent(3, prism::VertexAttributeType::FLOAT);
+	vertexDescription.addVertexComponent(4, prism::VertexAttributeType::FLOAT);
+
+	std::unique_ptr<prism::VertexContainer> vertexContainer = std::make_unique<prism::VertexContainer>(vertexDescription);
+	vertexContainer->addRawData(prism::pml::vec3(-0.5f,  0.5f, -3.0f));
+	vertexContainer->addRawData(prism::pml::vec4(0.1f, 0.6f, 0.3f, 1.0f));
+
+	vertexContainer->addRawData(prism::pml::vec3( 0.5f,  0.5f, -3.0f));
+	vertexContainer->addRawData(prism::pml::vec4(0.3f, 0.2f, 0.5f, 1.0f));
+
+	vertexContainer->addRawData(prism::pml::vec3( 0.5f, -0.5f, -3.0f));
+	vertexContainer->addRawData(prism::pml::vec4(0.5f, 0.9f, 0.7f, 1.0f));
+
+	vertexContainer->addRawData(prism::pml::vec3(-0.5f, -0.5f, -3.0f));
+	vertexContainer->addRawData( prism::pml::vec4(0.7f, 0.15f, 0.9f, 1.0f));
+
+	vertexContainer->addRawData(prism::pml::vec3(-0.5f,  0.5f, -4.0f));
+	vertexContainer->addRawData(prism::pml::vec4(0.1f, 0.6f, 0.3f, 1.0f));
+
+	vertexContainer->addRawData(prism::pml::vec3( 0.5f,  0.5f, -4.0f));
+	vertexContainer->addRawData(prism::pml::vec4(0.3f, 0.2f, 0.5f, 1.0f));
+
+	vertexContainer->addRawData(prism::pml::vec3( 0.5f, -0.5f, -4.0f));
+	vertexContainer->addRawData(prism::pml::vec4(0.5f, 0.9f, 0.7f, 1.0f));
+
+	vertexContainer->addRawData(prism::pml::vec3(-0.5f, -0.5f, -4.0f));
+	vertexContainer->addRawData(prism::pml::vec4(0.7f, 0.15f, 0.9f, 1.0f));
 
 	std::vector<std::uint32_t> win1Indices;
 	win1Indices.insert(win1Indices.end(), {0, 1, 2, // front face
@@ -138,18 +142,7 @@ void app(int, char**) {
 	prism::Material* win1Material = prism::PrismRoot::materialManager().createMaterial(vertexShaderSource, fragmentShaderSource);
 
 	// mesh generation using vertices and indices above
-	// vertexDataAttr can be modified for custom user-defined vertices. here, a default vertex layout is used (VertexDataDebug)
-	prism::VertexDataAttributes vertexDataAttr = prism::getVertexDataAttributes(v1);
-	std::unique_ptr<prism::VertexContainer> win1VerticesContainer = std::make_unique<prism::VertexContainer>(vertexDataAttr);
-	win1VerticesContainer->addVertex(&v1);
-	win1VerticesContainer->addVertex(&v2);
-	win1VerticesContainer->addVertex(&v3);
-	win1VerticesContainer->addVertex(&v4);
-	win1VerticesContainer->addVertex(&v5);
-	win1VerticesContainer->addVertex(&v6);
-	win1VerticesContainer->addVertex(&v7);
-	win1VerticesContainer->addVertex(&v8);
-	const prism::Mesh* win1Mesh = prism::PrismRoot::meshManager().createMesh(std::move(win1VerticesContainer), win1Indices);
+	const prism::Mesh* win1Mesh = prism::PrismRoot::meshManager().createMesh(std::move(vertexContainer), win1Indices);
 	
 	// create object using created mesh. define location and primitive draw type
 	std::unique_ptr<prism::SingleRenderObject> win1Obj = std::make_unique<prism::SingleRenderObject>(win1Mesh, prism::pml::vec3(0.0f, 0.0f, 0.0f), prism::PrimitiveType::TRIANGE);
@@ -199,22 +192,22 @@ void app(int, char**) {
 
 		// check state of keypresses 
 		if (window1->isKeyPressed(prism::KeyId::W)) {
-			win1Cam->moveForwardOrientation(0.0001f);
+			win1Cam->moveForwardCardinal(0.0001f);
 		}
 		if (window1->isKeyPressed(prism::KeyId::S)) {
-			win1Cam->moveBackwardOrientation(0.0001f);
+			win1Cam->moveBackwardCardinal(0.0001f);
 		}
 		if (window1->isKeyPressed(prism::KeyId::A)) {
-			win1Cam->moveLeftOrientation(0.0001f);
+			win1Cam->moveLeftCardinal(0.0001f);
 		}
 		if (window1->isKeyPressed(prism::KeyId::D)) {
-			win1Cam->moveRightOrientation(0.0001f);
+			win1Cam->moveRightCardinal(0.0001f);
 		}
 		if (window1->isKeyPressed(prism::KeyId::SPACE)) {
-			win1Cam->moveUpOrientation(0.0001f);
+			win1Cam->moveUpCardinal(0.0001f);
 		} 
 		if (window1->isKeyPressed(prism::KeyId::L_SHIFT)) {
-			win1Cam->moveDownOrientation(0.0001f);
+			win1Cam->moveDownCardinal(0.0001f);
 		} 
 		// win1Cam->setPosition(camPos);
 		win1Cam->updateCamMatrix();

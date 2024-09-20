@@ -13,16 +13,16 @@ class OpenglVAOFactory {
 public:
     ~OpenglVAOFactory() = default;
 
-    static OpenglVAO* generateVAO(VertexDataAttributes vertexAttr);
+    static OpenglVAO* generateVAO(const VertexDescriptor& vertexDescription);
 
 private:
     // hide constructors
     OpenglVAOFactory();
     static OpenglVAOFactory& getInstance();
 
-    OpenglVAO* generateVAOImpl(VertexDataAttributes vertexAttr);
+    OpenglVAO* generateVAOImpl(const VertexDescriptor& vertexDescription);
 
-    std::unordered_map<std::string, std::unique_ptr<OpenglVAO>> vaoMap;
+    std::unordered_map<std::size_t, std::unique_ptr<OpenglVAO>> vaoMap;
 };
 
 }

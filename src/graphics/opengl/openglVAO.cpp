@@ -7,31 +7,33 @@ OpenglVAO::OpenglVAO() {
     checkGLError("unable to create vao");
 }
 
-OpenglVAO::OpenglVAO(VertexDataAttributes vertexAttr) {
+OpenglVAO::OpenglVAO(const VertexDescriptor& vertexDescription) {
     glCreateVertexArrays(1, &ID);
     checkGLError("unable to create vao");
-    linkAttributeInfo(vertexAttr);
+    linkAttributeInfo(vertexDescription);
 }
 
-void OpenglVAO::linkAttributeInfo(VertexDataAttributes vertexAttr) {
+void OpenglVAO::linkAttributeInfo(const VertexDescriptor& vertexDescription) {
     // assumes all vectors in vertexAttr are equal in length
     unsigned int offset = 0u;
-    for (int i = 0; i < vertexAttr.attributes.size(); i++) {
-        GLenum glType = getGLType(vertexAttr.componentTypes[i]);
+    auto& components = vertexDescription.getFormat();
+    for (int i = 0; i < components.size(); i++) {
+        auto& component = components[i];
+        GLenum glType = getGLType(component[0]);
 
         glEnableVertexArrayAttrib(ID, i);
         checkGLError("could not enable vertex array attrib");
         glVertexArrayAttribBinding(ID, i, 0); // 0 or bindingIndex for bindingIndex
         checkGLError("unable to set vertex array attrib binding");
         glVertexArrayAttribFormat(ID, i, 
-            vertexAttr.componentLengths[i],
+            component.size(),
             glType, 
             GL_FALSE,
             offset);
         checkGLError("unable to link vertex attribute info to vao");
-        offset += sizeof(glType) * static_cast<unsigned int>(vertexAttr.componentLengths[i]);
+        offset += sizeof(glType) * static_cast<unsigned int>(component.size());
     }
-    this->vertexAttr = vertexAttr;
+    this->vertexDescription = vertexDescription;
 }
 
 OpenglVAO::~OpenglVAO() {
@@ -61,33 +63,33 @@ void OpenglVAO::unbind() const {
     checkGLError("unable to unbind vao");
 }
 
-GLenum OpenglVAO::getGLType(VertexAttrDataType type) const {
+GLenum OpenglVAO::getGLType(VertexAttributeType type) const {
     switch(type) {
-        case VertexAttrDataType::FLOAT:
+        case VertexAttributeType::FLOAT:
             return GL_FLOAT;
-        case VertexAttrDataType::INT8:
+        case VertexAttributeType::INT8:
             return GL_BYTE;
-        case VertexAttrDataType::UINT8:
+        case VertexAttributeType::UINT8:
             return GL_UNSIGNED_BYTE;
-        case VertexAttrDataType::INT16:
+        case VertexAttributeType::INT16:
             return GL_SHORT;
-        case VertexAttrDataType::UINT16:
+        case VertexAttributeType::UINT16:
             return GL_UNSIGNED_SHORT;
-        case VertexAttrDataType::INT32:
+        case VertexAttributeType::INT32:
             return GL_INT;
-        case VertexAttrDataType::UINT32:
+        case VertexAttributeType::UINT32:
             return GL_UNSIGNED_INT;
         // not really supported....
-        case VertexAttrDataType::INT64:
-        case VertexAttrDataType::UINT64:
-        case VertexAttrDataType::UNKNOWN:
+        case VertexAttributeType::INT64:
+        case VertexAttributeType::UINT64:
+        case VertexAttributeType::UNKNOWN:
         default:
             return GL_DOUBLE;
     }
 }
 
-VertexDataAttributes OpenglVAO::getVertexAttr() const {
-    return vertexAttr;
+const VertexDescriptor& OpenglVAO::getVertexDescription() const {
+    return vertexDescription;
 }
 
 }

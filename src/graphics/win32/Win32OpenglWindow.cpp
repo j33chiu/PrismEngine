@@ -36,7 +36,9 @@ void resolveGlFunction(T &func, const std::string &name) {
     const auto funcAddress = wglGetProcAddress(name.c_str());
     if (funcAddress == NULL) {
         prism::Logger::error("Win32OpenglWindow::resolveWglFunctions", "could not resolve gl function" + name);
-        throw prism::Exception("Win32OpenglWindow: could not resolve gl function.");
+        prism::setGLFunctionSupported(name, false);
+        // we no longer throw error. Some functions may not be supported, such as bindless textures, and we change behaviour at runtime accordingly
+        //throw prism::Exception("Win32OpenglWindow: could not resolve gl function.");  
     }
     if(funcAddress == 0 ||
         (funcAddress == (void*)0x1) || (funcAddress == (void*)0x2) || (funcAddress == (void*)0x3) ||
@@ -48,6 +50,7 @@ void resolveGlFunction(T &func, const std::string &name) {
     } else {
         func = reinterpret_cast<T>(funcAddress);
     }
+    prism::setGLFunctionSupported(name, true);
 }
 
 bool initOpenGlExtensions(HINSTANCE instance) {
@@ -302,6 +305,9 @@ bool Win32OpenglWindow::initActualOpenGL(HDC actualDc) {
 void Win32OpenglWindow::updateGraphicsSettings() {
     // vsync
     wglSwapIntervalEXT(graphicsSettings.isVsyncEnabled());
+    // TODO: antialiasing
+    
+    glEnable(GL_MULTISAMPLE);
 }
 
 }

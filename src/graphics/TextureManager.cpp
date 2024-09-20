@@ -6,80 +6,55 @@
 #include "util/PrismHash.h"
 #include "util/files/FileManager.h"
 
-namespace {
-
-std::tuple<std::vector<std::byte>, std::uint32_t, std::uint32_t, std::uint8_t> parse_image(
-    const std::vector<char>& data,
-    bool flipOnLoad = true)
-{
-    int width = 0;
-    int height = 0;
-    int channels = 0;
-
-    stbi_set_flip_vertically_on_load(flipOnLoad);
-
-    unsigned char* rawDataStart = stbi_load_from_memory(reinterpret_cast<const stbi_uc *>(data.data()),
-                                                    static_cast<int>(data.size()),
-                                                    &width,
-                                                    &height,
-                                                    &channels,
-                                                    0);
-
-    if (!rawDataStart || (channels == 0)) 
-        throw prism::Exception("failed to load image data");
-
-    std::byte* rawDataStartBytes = reinterpret_cast<std::byte*>(rawDataStart);
-
-    const int rawDataSize = width * height * channels;
-
-    std::byte* rawDataEndBytes = rawDataStartBytes + rawDataSize;
-
-    std::vector<std::byte> out(rawDataSize);
-
-    out.assign(rawDataStartBytes, rawDataEndBytes);
-
-    return std::make_tuple(
-        std::move(out), static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height), static_cast<std::uint8_t>(channels));
-}
-
-}
-
 namespace prism {
 
 TextureManager::TextureManager() 
-    : textureIdCounter(0u)
-    , texturesMap()
-    , samplerIdCounter(0u)
-    , samplersMap()
+    : texturesList()
+    , loadedTexturesMap()
+    , textureSamplersList()
+    , loadedTextureSamplersMap()
 {}
 
 Texture* TextureManager::loadTexture(const std::string& textureFile, 
                         TextureUse textureUsage, 
                         const TextureSampler* textureSampler) 
 {
-    if (textureUsage != TextureUse::IMAGE || textureUsage != TextureUse::DATA_MAP) 
+    if (textureUsage != TextureUse::IMAGE && textureUsage != TextureUse::DATA_MAP) 
         throw Exception("Only data maps and images can be loaded into textures from files.");
 
-    std::size_t hash = prism::hash(textureFile);
-
-    if (!texturesMap.contains(hash)) {
-        // load from file
-
-        FileManager::setLocation("testLocation");
-        std::vector<char> data = FileManager::readFileBytes(textureFile);
-        
-    } else {
-        // increment number of uses of the texture
-        std::get<0>(texturesMap[hash])++;
+    if (!textureSampler) {
+        throw Exception("Texture Sampler must not be null when loading a texture.");
     }
 
-    return std::get<1>(texturesMap[hash]).get();
+    int textureId = -1;
+    auto it = loadedTexturesMap.find(textureFile);
+    if (it != loadedTexturesMap.end()) {
+        // texture already loaded
+        textureId = it->second;
+        // increment number of uses of the texture
+        std::get<1>(texturesList[textureId]) += 1;
+    } else {
+        // TODO: load from file
+        auto parsedFile = FileManager::getInstance().parseImage(textureFile);
+        textureId = getAvailableTextureId();
+        std::unique_ptr texture = createUniqueTexture(textureUsage, 
+                                                      std::get<0>(parsedFile), 
+                                                      std::get<1>(parsedFile), 
+                                                      std::get<2>(parsedFile), 
+                                                      std::get<3>(parsedFile), 
+                                                      textureSampler, 
+                                                      textureId);
+        texturesList.push_back({std::move(texture), 1u});
+    }
+
+    return std::get<0>(texturesList[textureId]).get();
 }
 
 Texture* TextureManager::createTexture(TextureUse textureUsage, 
                         const std::vector<std::byte>& bytes, 
                         std::uint32_t width, 
                         std::uint32_t height,
+                        std::uint8_t channels,
                         const TextureSampler* textureSampler)
 {
     // hash generated string, should not collide with possible texture filenames
@@ -91,36 +66,40 @@ Texture* TextureManager::createTexture(TextureUse textureUsage,
 
     size_t hash = prism::hash(st.str());
 
-    std::unique_ptr texture = createUniqueTexture(textureUsage, bytes, width, height, textureSampler, getAvailableTextureId());
-
-    texturesMap[hash] = {1u, std::move(texture)};
-    return std::get<1>(texturesMap[hash]).get();
+    std::unique_ptr texture = createUniqueTexture(textureUsage, bytes, width, height, channels, textureSampler, getAvailableTextureId());
+    texturesList.push_back({std::move(texture), 1u});
+    return std::get<0>(texturesList[texturesList.size() - 1]).get();
 }
 
 std::uint32_t TextureManager::getAvailableTextureId() {
-    return textureIdCounter++;
+    return texturesList.size();
 }
 
 std::vector<const Texture*> TextureManager::getTextures() const {
     std::vector<const Texture*> textures;
-    std::for_each(texturesMap.begin(), texturesMap.end(),
-                    [&textures] (const auto& pair) {
-                        textures.push_back(std::get<1>(pair.second).get());
-                    });
+    for (auto& pair : texturesList) {
+        textures.push_back(std::get<0>(pair).get());
+    }
     return textures;
 }
 
 // texture samplers
 TextureSampler* TextureManager::createSampler(const TextureSamplerAttributes& samplerAttributes) {
-    if (!samplersMap.contains(samplerAttributes)) {
-        // create default sampler
-        std::unique_ptr<TextureSampler> sampler = createUniqueSampler(samplerAttributes, getAvailableSamplerId());
-        samplersMap[samplerAttributes] = {1u, std::move(sampler)};
+    int samplerId = -1;
+    auto it = loadedTextureSamplersMap.find(samplerAttributes);
+    if (it != loadedTextureSamplersMap.end()) {
+        // sampler already loaded
+        // increment number of uses of the sampler
+        samplerId = it->second;
+        std::get<1>(textureSamplersList[samplerId]) += 1;
     } else {
-        // incrememnt number of uses of the sampler
-       std::get<0>(samplersMap[samplerAttributes])++;
+        // sample not made yet
+        // create default sampler
+        samplerId = getAvailableSamplerId();
+        std::unique_ptr<TextureSampler> sampler = createUniqueSampler(samplerAttributes, samplerId);
+        textureSamplersList.push_back({std::move(sampler), 1u});
     }
-    return std::get<1>(samplersMap[samplerAttributes]).get();
+    return std::get<0>(textureSamplersList[samplerId]).get();
 }
 
 TextureSampler* TextureManager::getDefaultSampler() {
@@ -130,15 +109,14 @@ TextureSampler* TextureManager::getDefaultSampler() {
 }
 
 std::uint32_t TextureManager::getAvailableSamplerId() {
-    return samplerIdCounter++;
+    return textureSamplersList.size();
 }
 
 std::vector<const TextureSampler*> TextureManager::getSamplers() const {
     std::vector<const TextureSampler*> samplers;
-    std::for_each(samplersMap.begin(), samplersMap.end(),
-                    [&samplers] (const auto& pair) {
-                        samplers.push_back(std::get<1>(pair.second).get());
-                    });
+    for (auto& pair : textureSamplersList) {
+        samplers.push_back(std::get<0>(pair).get());
+    }
     return samplers;
 }
 

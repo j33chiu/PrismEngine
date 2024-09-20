@@ -47,7 +47,7 @@ void drawObject(const prism::RenderObject* obj) {
         static_cast<GLuint>(static_cast<const prism::InstancedRenderObject*>(obj)->getInstancesCount()) : 1u;
 
     // bind vbo and ebo
-    glBindVertexBuffer(0u, glMesh->getVBOId(), 0, glMesh->getVAO()->getVertexAttr().vertexStride);
+    glBindVertexBuffer(0u, glMesh->getVBOId(), 0, glMesh->getVAO()->getVertexDescription().getVertexSizeBytes());
     prism::checkGLError("unable to bind object vbo");
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh->getEBOId());
     prism::checkGLError("unable to bind object ebo");
@@ -91,7 +91,7 @@ OpenGLRenderer::OpenGLRenderer(const uint32_t width, const uint32_t height)
 	glCullFace(GL_FRONT); // almost always want front face
     checkGLError("unable to set cull face to front");
 	glFrontFace(GL_CCW); // usually order of triangle indices is ccw
-    checkGLError("unabe to set ccw to front face");
+    checkGLError("unable to set ccw to front face");
 }
 
 void OpenGLRenderer::setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline) {

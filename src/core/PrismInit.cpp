@@ -10,6 +10,8 @@
 #include "graphics/opengl/openglMeshManager.h"
 #include "graphics/MaterialManager.h"
 #include "graphics/opengl/openglMaterialManager.h"
+#include "graphics/TextureManager.h"
+#include "graphics/opengl/openglTextureManager.h"
 
 void engineRootInit(prism::Platform platformInfo) {
     // depending on platform, managers can be initialized and attached to root here:
@@ -19,6 +21,7 @@ void engineRootInit(prism::Platform platformInfo) {
     std::unique_ptr<prism::WindowManager> windowManager;
     std::unique_ptr<prism::MeshManager> meshManager;
     std::unique_ptr<prism::MaterialManager> materialManager;
+    std::unique_ptr<prism::TextureManager> textureManager;
 
     // handle platform device first:
     switch (platformInfo.devicePlatform) {
@@ -36,6 +39,7 @@ void engineRootInit(prism::Platform platformInfo) {
         case prism::GraphicsApi::OPENGL:
             meshManager = std::make_unique<prism::OpenglMeshManager>();
             materialManager = std::make_unique<prism::OpenglMaterialManager>();
+            textureManager = std::make_unique<prism::OpenGLTextureManager>();
             break;
         case prism::GraphicsApi::VULKAN:
             break;
@@ -51,7 +55,8 @@ void engineRootInit(prism::Platform platformInfo) {
         platformInfo.graphicsApi,
         std::move(windowManager),
         std::move(meshManager),
-        std::move(materialManager));
+        std::move(materialManager),
+        std::move(textureManager));
 }
 
 namespace prism {
@@ -63,7 +68,7 @@ namespace prism {
 */
 void init(int argc, char **argv, std::function<void(int, char**)> func, Platform platformInfo) {
     Logger::turnOn();
-    Logger::info("PrismInit::initDebug", "Prism initialized with Debug.");
+    Logger::info("PrismInit::init", "Prism initialized with Debug.");
 
     engineRootInit(platformInfo);
 
@@ -76,7 +81,7 @@ void init(int argc, char **argv, std::function<void(int, char**)> func, Platform
     }
 
     Logger::turnOn();
-    Logger::info("PrismInit::initDebug", "Prism stopping...");
+    Logger::info("PrismInit::init", "Prism stopping...");
 
     PrismRoot::stop();
 }

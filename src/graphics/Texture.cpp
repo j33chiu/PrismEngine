@@ -2,38 +2,40 @@
 
 namespace prism {
 
-Texture::Texture(std::uint32_t id,
-    TextureUse textureUsage, 
+Texture::Texture(std::uint32_t textureId,
+    TextureUse textureUse, 
     const std::vector<std::byte>& bytes, 
     std::uint32_t width, 
     std::uint32_t height,
+    std::uint8_t channels,
     const TextureSampler* textureSampler)
-    : textureUsage(textureUsage)
+    : textureUse(textureUse)
     , bytes(bytes)
     , width(width)
     , height(height)
-    , ID(ID)
+    , channels(channels)
+    , textureId(textureId)
     , transparencyModifier(1.0f)
     , transparent(false)
     , textureSampler(textureSampler)
 {
-    // assume 4 channel texture, rgba
-    for (int i = 3; i < bytes.size(); i += 4) {
-        if (bytes[i] != std::byte{0xFF}) {
-            transparent = true;
-            break;
+    if (channels == 4) {
+        // can check for transparency
+        for (int i = 3; i < bytes.size(); i += 4) {
+            if (bytes[i] != std::byte{0xFF}) {
+                transparent = true;
+                break;
+            }
         }
     }
 }
 
-Texture::~Texture() = default;
-
 std::uint32_t Texture::getID() const {
-    return ID;
+    return textureId;
 }
 
 TextureUse Texture::getTextureUse() const {
-    return textureUsage;
+    return textureUse;
 }
 
 const std::vector<std::byte>& Texture::getBytes() const {
@@ -46,6 +48,10 @@ std::uint32_t Texture::getWidth() const {
 
 std::uint32_t Texture::getHeight() const {
     return height;
+}
+
+std::uint8_t Texture::getChannels() const {
+    return channels;
 }
 
 void Texture::setTransparencyModifier(float transparencyModifier) {

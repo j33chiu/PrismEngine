@@ -3,6 +3,8 @@
 #include <assert.h>
 
 #include "graphics/RenderObject.h"
+#include "logger/Logger.h"
+#include "core/Exception.h"
 
 namespace prism {
 

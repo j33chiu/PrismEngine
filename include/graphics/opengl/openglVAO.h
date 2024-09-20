@@ -15,11 +15,11 @@ public:
 
     OpenglVAO();
 
-    OpenglVAO(VertexDataAttributes vertexAttr);
+    OpenglVAO(const VertexDescriptor& vertexDescription);
 
     ~OpenglVAO();
 
-    void linkAttributeInfo(VertexDataAttributes vertexAttr);
+    void linkAttributeInfo(const VertexDescriptor& vertexDescription);
 
     void addVBO(GLuint vbo, GLuint bindingIndex, GLsizei vertexStride);
 
@@ -29,14 +29,14 @@ public:
 
     void unbind() const;
 
-    VertexDataAttributes getVertexAttr() const;
+    const VertexDescriptor& getVertexDescription() const;
 
 private:
-    GLenum getGLType(VertexAttrDataType type) const;
+    GLenum getGLType(VertexAttributeType type) const;
 
     GLuint ID;
 
-    VertexDataAttributes vertexAttr;
+    VertexDescriptor vertexDescription;
     unsigned int numVBO = 0;
     unsigned int numEBO = 0;
 

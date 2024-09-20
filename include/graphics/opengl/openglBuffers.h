@@ -5,7 +5,7 @@
 
 #include "logger/Logger.h"
 #include "graphics/opengl/opengl.h"
-#include "graphics/Vertex.h"
+#include "core/Exception.h"
 
 namespace prism {
 

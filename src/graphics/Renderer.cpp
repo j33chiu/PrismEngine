@@ -1,6 +1,7 @@
 #include "graphics/Renderer.h"
 
 #include "core/Exception.h"
+#include "logger/Logger.h"
 
 namespace prism {
 

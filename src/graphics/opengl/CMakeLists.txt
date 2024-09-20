@@ -12,6 +12,9 @@ target_sources(prism PRIVATE
 	${_INCL}/openglMeshManager.h
 	${_INCL}/openglMaterial.h
 	${_INCL}/openglMaterialManager.h
+	${_INCL}/openglTexture.h
+	${_INCL}/openglTextureSampler.h
+	${_INCL}/openglTextureManager.h
 	opengl.cpp
 	openglShader.cpp
 	openglVAO.cpp
@@ -21,4 +24,7 @@ target_sources(prism PRIVATE
 	openglMeshManager.cpp
 	openglMaterial.cpp
 	openglMaterialManager.cpp
+	openglTexture.cpp
+	openglTextureSampler.cpp
+	openglTextureManager.cpp
 )
