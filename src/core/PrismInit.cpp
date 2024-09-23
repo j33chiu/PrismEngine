@@ -29,9 +29,8 @@ void engineRootInit(prism::Platform platformInfo) {
             windowManager = std::make_unique<prism::Win32WindowManager>(platformInfo);
             break;
         default:
-            prism::Logger::error("unspecified platform info.. could not initialize app");
-            throw prism::Exception("unspecified platform info.. could not initialize app");
-            break;
+            prism::Logger::error("engineRootInit", "unspecified platform info.. could not initialize app");
+            return;
     }
 
     // handle graphicsApi:
@@ -46,9 +45,8 @@ void engineRootInit(prism::Platform platformInfo) {
         case prism::GraphicsApi::DIRECTX12:
             break;
         default:
-            prism::Logger::error("unspecified platform info.. could not initialize graphics api");
-            throw prism::Exception("unspecified platform info.. could not initialize app");
-            break;
+            prism::Logger::error("engineRootInit", "unspecified platform info.. could not initialize graphics api");
+            return;
     }
 
     prism::PrismRoot::registerGraphicsApi(

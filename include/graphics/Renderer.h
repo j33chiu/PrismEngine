@@ -28,18 +28,17 @@ protected:
 
     virtual void preRender();
 
-    virtual void startPass(RenderStep& step);
+    virtual void startPass(RenderStep* step);
 
-    virtual void draw(RenderStep& step);
+    virtual void draw(RenderStep* step);
 
-    virtual void endPass(RenderStep& step);
+    virtual void endPass(RenderStep* step);
 
-    virtual void frame(RenderStep& step);
+    virtual void frame(RenderStep* step);
 
     virtual void postRender();
 
     std::unique_ptr<RenderPipeline> pipeline;
-    std::vector<RenderStep> renderQueue;
 
     uint32_t width;
     uint32_t height;

@@ -28,6 +28,16 @@ void Scene::removeObject(RenderObject* obj) {
     );
 }
 
+void Scene::removeObject(PrismId objectId) {
+    objects.erase(
+        std::remove_if(
+            std::begin(objects),
+            std::end(objects),
+            [objectId](const auto &o) {return std::get<1>(o).get()->getId() == objectId;}
+        ),
+        std::end(objects)
+    );
+}
 
 std::vector<std::tuple<const Material*, std::unique_ptr<RenderObject>>>& Scene::getObjects() {
     return objects;

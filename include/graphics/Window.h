@@ -41,6 +41,7 @@ public:
     virtual void removeContext();
     virtual void setContext();
     virtual void render();
+    virtual void setRenderThreadPriority() = 0;
 
     // for multiple windows, allow prism to know which is in focus and handle focus/unfocus events
     void setPrismFocusCallback(std::function<void(Window*)> prismGrabFocusCallback);
@@ -88,7 +89,7 @@ private:
     std::function<void(Window*)> prismGrabFocusCallback;
 
     // for render thread
-    bool renderFlag = false;
+    std::atomic<bool> renderFlag = false;
     bool renderThreadRunning = false;
     std::thread renderThread;
 

@@ -72,7 +72,7 @@ void Window::setPrismFocusCallback(std::function<void(Window*)> prismGrabFocusCa
 
 void Window::startRenderThread() {
     //windowController.start();
-    renderFlag = true;
+    renderFlag.store(true);
     renderThreadRunning = true;
     this->removeContext(); // remove context from current thread so renderThread can set context
     renderThread = std::thread(&Window::renderLoop, this);
@@ -80,7 +80,7 @@ void Window::startRenderThread() {
 
 void Window::stopRenderThread() {
     //windowController.stop();
-    renderFlag = false;
+    renderFlag.store(false);
     renderThread.join(); // render thread finished
     this->setContext();  // set the context back to current thread
     // can now release the renderer, cleaning up resources
@@ -93,13 +93,13 @@ bool Window::isRenderThreadRunning() const {
 
 void Window::renderLoop() {
     this->setContext(); // set context in render thread
-
+    setRenderThreadPriority();
     // fps counter
     int frames = 0;
     float fps = 0.0f;
     auto startTime = std::chrono::steady_clock::now();
     int elapsedMs;
-    while(renderFlag) {
+    while(renderFlag.load()) {
         this->render();
 
         // fps counting

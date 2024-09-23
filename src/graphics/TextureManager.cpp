@@ -5,6 +5,7 @@
 #include "core/Exception.h"
 #include "util/PrismHash.h"
 #include "util/files/FileManager.h"
+#include "logger/Logger.h"
 
 namespace prism {
 
@@ -19,11 +20,14 @@ Texture* TextureManager::loadTexture(const std::string& textureFile,
                         TextureUse textureUsage, 
                         const TextureSampler* textureSampler) 
 {
-    if (textureUsage != TextureUse::IMAGE && textureUsage != TextureUse::DATA_MAP) 
-        throw Exception("Only data maps and images can be loaded into textures from files.");
+    if (textureUsage != TextureUse::IMAGE && textureUsage != TextureUse::DATA_MAP) {
+        Logger::error("TextureManager::loadTexture", "Only data maps and images can be loaded into textures from files.");
+        return nullptr;
+    }
 
     if (!textureSampler) {
-        throw Exception("Texture Sampler must not be null when loading a texture.");
+        Logger::error("TextureManager::loadTexture", "Texture Sampler must not be null when loading a texture.");
+        return nullptr;
     }
 
     int textureId = -1;
@@ -34,7 +38,6 @@ Texture* TextureManager::loadTexture(const std::string& textureFile,
         // increment number of uses of the texture
         std::get<1>(texturesList[textureId]) += 1;
     } else {
-        // TODO: load from file
         auto parsedFile = FileManager::getInstance().parseImage(textureFile);
         textureId = getAvailableTextureId();
         std::unique_ptr texture = createUniqueTexture(textureUsage, 

@@ -22,6 +22,7 @@ public:
 
     RenderObject* addObject(const Material* material, std::unique_ptr<RenderObject> obj);
     void removeObject(RenderObject* obj);
+    void removeObject(PrismId objectId);
 
     std::vector<std::tuple<const Material*, std::unique_ptr<RenderObject>>>& getObjects();
     const std::vector<std::tuple<const Material*, std::unique_ptr<RenderObject>>>& getObjects() const;

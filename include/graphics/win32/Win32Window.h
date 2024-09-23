@@ -32,7 +32,7 @@ public:
     bool isKeyPressed(KeyId key) override;
     bool isMousePressed(MouseButton mouseButton) override;
 
-
+    void setRenderThreadPriority() override;
     HDC getDeviceContext() const;
     std::uint32_t getDpi() const;
     std::uint32_t getScreenScale() const override;

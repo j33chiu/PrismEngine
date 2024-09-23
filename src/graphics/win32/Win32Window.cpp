@@ -391,7 +391,6 @@ std::optional<Event> Win32Window::pollWindow() {
     }
 
     // TODO: allow user to register listeners and other functions to the window, which can be processed/called here
-    // TODO: onWindowChangedSize function, needs to modify renderer renderpipeline etc
 
     return event;
 }
@@ -402,6 +401,13 @@ bool Win32Window::isKeyPressed(KeyId key) {
 
 bool Win32Window::isMousePressed(MouseButton mouseButton) {
     return heldState[(std::uint32_t)mouseButton];
+}
+
+void Win32Window::setRenderThreadPriority() {
+    HANDLE currentThread = GetCurrentThread();
+    if (!SetThreadPriority(currentThread, THREAD_PRIORITY_HIGHEST)) {
+        Logger::debug("Win32Window::setRenderThreadPriority()", "unable to set render thread priority");
+    }
 }
 
 HDC Win32Window::getDeviceContext() const {
@@ -565,6 +571,8 @@ LRESULT Win32Window::handleWindowsMessage(UINT uMsg, WPARAM wParam, LPARAM lPara
         case WM_INPUT: 
         // https://learn.microsoft.com/en-us/windows/win32/dxtecharts/taking-advantage-of-high-dpi-mouse-movement
         {
+            // if not in focus, ignore
+            if (GetForegroundWindow() != window) break;
             UINT dwSize = sizeof(RAWINPUT);
             static BYTE lpb[sizeof(RAWINPUT)];
 

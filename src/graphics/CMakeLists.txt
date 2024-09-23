@@ -20,8 +20,6 @@ target_sources(prism PRIVATE
 	${_INCL}/TextureSampler.h
 	${_INCL}/Scene.h
 	${_INCL}/RenderObject.h
-	${_INCL}/SingleRenderObject.h
-	${_INCL}/InstancedRenderObject.h
 	${_INCL}/Material.h
 	${_INCL}/MaterialManager.h
 	${_INCL}/Mesh.h
@@ -39,8 +37,6 @@ target_sources(prism PRIVATE
 	TextureSampler.cpp
 	Scene.cpp
 	RenderObject.cpp
-	SingleRenderObject.cpp
-	InstancedRenderObject.cpp
 	Mesh.cpp
 	MeshManager.cpp
 	Vertex.cpp
