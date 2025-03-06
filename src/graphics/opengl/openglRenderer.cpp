@@ -7,24 +7,14 @@
 #include "graphics/opengl/openglMesh.h"
 #include "graphics/opengl/OpenGLVAO.h"
 #include "graphics/RenderObject.h"
-#include "graphics/SingleRenderObject.h"
-#include "graphics/InstancedRenderObject.h"
 #include "graphics/Material.h"
 #include "graphics/opengl/openglMaterial.h"
 
 namespace {
 
-// helper function to get the transformation matrix of renderobjects
-prism::pml::mat4 getTransformation(prism::pml::vec3 pos, prism::pml::FLOAT scale, prism::pml::FLOAT rotateDeg) {
-    prism::pml::mat4 m;
-    m[3] = prism::pml::vec4(pos);
-
-    return m;
-}
-
 // helper function to draw renderobject
 void drawObject(const prism::RenderObject* obj) {
-    // note that vao binds can be optimized (todo)
+    // note that vao binds can be optimized with the vao map (TODO)
     // bind obj vao
     const prism::OpenGLMesh* glMesh = static_cast<const prism::OpenGLMesh*>(obj->getMesh());
     glMesh->getVAO()->bind();
@@ -32,7 +22,7 @@ void drawObject(const prism::RenderObject* obj) {
     GLenum primitiveType = GL_TRIANGLES;
     switch(obj->getPrimitiveType()) {
         default:
-        case prism::PrimitiveType::TRIANGE:
+        case prism::PrimitiveType::TRIANGLE:
             primitiveType = GL_TRIANGLES;
             break;
         case prism::PrimitiveType::LINE:
@@ -43,11 +33,10 @@ void drawObject(const prism::RenderObject* obj) {
             break;
     }
 
-    GLuint instances = (obj->getType() == prism::RenderObjectType::INSTANCED) ? 
-        static_cast<GLuint>(static_cast<const prism::InstancedRenderObject*>(obj)->getInstancesCount()) : 1u;
+    GLuint instances = obj->getNumInstances();
 
     // bind vbo and ebo
-    glBindVertexBuffer(0u, glMesh->getVBOId(), 0, glMesh->getVAO()->getVertexAttr().vertexStride);
+    glBindVertexBuffer(0u, glMesh->getVBOId(), 0, glMesh->getVAO()->getVertexDescription().getVertexSizeBytes());
     prism::checkGLError("unable to bind object vbo");
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh->getEBOId());
     prism::checkGLError("unable to bind object ebo");
@@ -70,13 +59,10 @@ void drawObject(const prism::RenderObject* obj) {
 
 namespace prism {
 
-OpenGLRenderer::OpenGLRenderer(std::uint32_t width, std::uint32_t height) 
-    : Renderer()
-    , width(width)
-    , height(height)
+OpenGLRenderer::OpenGLRenderer(const uint32_t width, const uint32_t height) 
+    : Renderer(width, height)
     , cameraData()
-    , singleObjectData()
-    , instancedObjectData()
+    , objectData()
     , vaos()
     , vaoObjectMap()
 {
@@ -93,28 +79,30 @@ OpenGLRenderer::OpenGLRenderer(std::uint32_t width, std::uint32_t height)
 	glCullFace(GL_FRONT); // almost always want front face
     checkGLError("unable to set cull face to front");
 	glFrontFace(GL_CCW); // usually order of triangle indices is ccw
-    checkGLError("unabe to set ccw to front face");
+    checkGLError("unable to set ccw to front face");
 }
 
 void OpenGLRenderer::setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline) {
     this->pipeline = std::move(pipeline);
     this->pipeline->buildQueue();
-    renderQueue = this->pipeline->getRenderQueue();
 
-    // do any processing using built renderqueue that has to be done before starting to render
-
+    RenderStep* currentStep = this->pipeline->getRenderQueueStart();
     // for all objects, create ssbo for transformation data and ensure VAOs created
-    for (const RenderStep& step : renderQueue) {
-        if (step.getType() == RenderStepType::DRAW) {
-            const RenderObject* object = step.getObject();
-            if (object->getType() == RenderObjectType::INSTANCED) {
-                const InstancedRenderObject* instancedObject = static_cast<const InstancedRenderObject *>(object);
-                instancedObjectData[object] = std::make_unique<SSBO>(sizeof(pml::mat4) * instancedObject->getInstancesCount(), OBJECT_TRANSFORM_SSBO_BINDING_INDEX);
-                instancedObjectData[object]->writeVector(instancedObject->getData());
-            } else if (object->getType() == RenderObjectType::SINGLE) {
-                const SingleRenderObject* singleObject = static_cast<const SingleRenderObject *>(object);
-                singleObjectData[object] = std::make_unique<SSBO>(sizeof(pml::mat4), OBJECT_TRANSFORM_SSBO_BINDING_INDEX);
-                singleObjectData[object]->write(singleObject->getData());
+    while (currentStep) {
+        if (currentStep->getType() == RenderStepType::DRAW) {
+            const RenderObject* object = currentStep->getObject();
+            RenderObjectType objectType = object->getType();
+            if (objectType != RenderObjectType::NONE) {
+                auto it = objectData.find(object);
+                if (it == objectData.end()) {
+                    // need to create buffer
+                    std::unique_ptr<SSBO> ssbo = std::make_unique<SSBO>(sizeof(pml::mat4) * object->getNumInstances(), OBJECT_TRANSFORM_SSBO_BINDING_INDEX);
+                    ssbo->writeVector(object->getInstanceData());
+                    objectData[object] = std::move(ssbo);
+                } else {
+                    // buffer exists already, update it
+                    it->second->overwriteVector(object->getInstanceData());
+                }
             }
             const Mesh* objectMesh = object->getMesh();
             const OpenGLMesh* objectGLMesh = static_cast<const OpenGLMesh*>(objectMesh);
@@ -125,19 +113,19 @@ void OpenGLRenderer::setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline)
             }
             vaoObjectMap[objectGLMesh->getVAO()].push_back(object);
         }
+        currentStep = currentStep->getNextStep();
     }
 
     // setup cameradata UBOs
     // camera ubo set as binding index 0 for inside shader
     cameraData = std::make_unique<UBO>(sizeof(pml::mat4), CAMERA_UBO_BINDING_INDEX);
-
 }
 
-void OpenGLRenderer::startPass(RenderStep& step) {
+void OpenGLRenderer::startPass(RenderStep* step) {
     // once framebuffer is implemented, use here
     bool hasTarget = false;
 
-    const Camera* camera = step.getCamera();
+    const Camera* camera = step->getCamera();
     if (!hasTarget) {
         std::uint32_t scale = PrismRoot::windowManager().getCurrentWindow()->getScreenScale();
         glViewport(0, 0, width * scale, height * scale);
@@ -147,7 +135,7 @@ void OpenGLRenderer::startPass(RenderStep& step) {
         checkGLError("could not bind default framebuffer");
     }
 
-    // clear target if specified in the step (todo)
+    // clear target if specified in the step (TODO)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     checkGLError("unable to clear");
 
@@ -158,8 +146,8 @@ void OpenGLRenderer::startPass(RenderStep& step) {
 
 }
 
-void OpenGLRenderer::draw(RenderStep& step) {
-    const RenderObject* renderObject = step.getObject();
+void OpenGLRenderer::draw(RenderStep* step) {
+    const RenderObject* renderObject = step->getObject();
 
     // once framebuffer is implemented, use here
     bool hasTarget = false;
@@ -171,7 +159,7 @@ void OpenGLRenderer::draw(RenderStep& step) {
 
     // bind material (shader program) if needed
     static const Material* previousMaterial = nullptr;
-    const OpenglMaterial* material = static_cast<const OpenglMaterial*>(step.getMaterial());
+    const OpenglMaterial* material = static_cast<const OpenglMaterial*>(step->getMaterial());
     if (material != previousMaterial) {
         previousMaterial = material;
         material->bind();
@@ -206,22 +194,26 @@ void OpenGLRenderer::draw(RenderStep& step) {
     glBindBufferBase(GL_UNIFORM_BUFFER, CAMERA_UBO_BINDING_INDEX, cameraData->getID());
     checkGLError("could not bind cameraData UBO");
 
-    if (renderObject->getType() == RenderObjectType::SINGLE) {
-        const SingleRenderObject* singleObject = static_cast<const SingleRenderObject *>(renderObject);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, OBJECT_TRANSFORM_SSBO_BINDING_INDEX, singleObjectData[renderObject]->getID());
-        checkGLError("could not bind model data SSBO");
-        singleObjectData[renderObject]->overwrite(singleObject->getData());
+    prism::RenderObjectType objectType = renderObject->getType();
+    if (objectType == RenderObjectType::NONE) return;
+
+    auto it = objectData.find(renderObject);
+    if (it == objectData.end()) {
+        // buffer for object does not exist yet, need to create
+        std::unique_ptr<SSBO> ssbo = std::make_unique<SSBO>(sizeof(pml::mat4) * renderObject->getNumInstances(), OBJECT_TRANSFORM_SSBO_BINDING_INDEX);
+        ssbo->writeVector(renderObject->getInstanceData());
+        objectData[renderObject] = std::move(ssbo);
     } else {
-        const InstancedRenderObject* instancedObject = static_cast<const InstancedRenderObject *>(renderObject);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, OBJECT_TRANSFORM_SSBO_BINDING_INDEX, instancedObjectData[renderObject]->getID());
+        // buffer exists already, overwrite it with updated data
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, OBJECT_TRANSFORM_SSBO_BINDING_INDEX, it->second->getID());
         checkGLError("could not bind model data SSBO");
-        instancedObjectData[renderObject]->overwrite(instancedObject->getData());
+        it->second->overwriteVector(renderObject->getInstanceData());
     }
 
     drawObject(renderObject);
 }
 
-void OpenGLRenderer::frame(RenderStep& step) {
+void OpenGLRenderer::frame(RenderStep* step) {
 
 #   if defined(PRISM_PLATFORM_WIN32)
     const Win32OpenglWindow* window = static_cast<const Win32OpenglWindow*>(PrismRoot::windowManager().getCurrentWindow());

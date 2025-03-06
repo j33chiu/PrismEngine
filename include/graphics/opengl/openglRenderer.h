@@ -17,30 +17,28 @@ namespace prism {
 class OpenGLRenderer : public Renderer {
 
 public:
-    OpenGLRenderer(std::uint32_t width, std::uint32_t height);
+    OpenGLRenderer(const uint32_t width, const uint32_t height);
     ~OpenGLRenderer() override = default;
 
     void setRenderPipeline(std::unique_ptr<RenderPipeline> pipeline) override;
 
 protected:
-    void startPass(RenderStep& step) override;
-    void draw(RenderStep& step) override;
-    void frame(RenderStep& step) override;
+    void startPass(RenderStep* step) override;
+    void draw(RenderStep* step) override;
+    void frame(RenderStep* step) override;
 
 private:
-    // window width and height
-    std::uint32_t width;
-    std::uint32_t height;
 
-    // ubo for camera data (single camera for now)
+    // ubo for camera data, 
+    // TODO: manage 1 UBO per camera to avoid re-writing camera data to the same buffer each time a frame is rendered
+    //      would allow for multiple cameras to be rendered per frame
     std::unique_ptr<UBO> cameraData;
 
     // frame buffer (single one for now)
     
 
-    // SSBO for object data
-    std::unordered_map<const RenderObject*, std::unique_ptr<SSBO>> singleObjectData;
-    std::unordered_map<const RenderObject*, std::unique_ptr<SSBO>> instancedObjectData;
+    // SSBO for object data (transforms etc)
+    std::unordered_map<const RenderObject*, std::unique_ptr<SSBO>> objectData;
 
     // store all required VAOs and objects that use them
     // generate VAOs when renderpipeline is set (since all objects to be rendered will be processed)

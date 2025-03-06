@@ -4,5 +4,6 @@ set(_INCL "${PROJECT_SOURCE_DIR}/include/util/files")
 
 target_sources(prism PRIVATE
 	${_INCL}/FileManager.h
+    ${_INCL}/stb_image.h
     FileManager.cpp
 )

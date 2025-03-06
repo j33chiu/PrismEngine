@@ -1,3 +1,5 @@
+add_subdirectory("files")
+
 add_executable(PrismHashTests "")
 target_sources(PrismHashTests PRIVATE
     PrismHashTest.cpp

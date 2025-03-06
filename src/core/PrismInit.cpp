@@ -10,27 +10,27 @@
 #include "graphics/opengl/openglMeshManager.h"
 #include "graphics/MaterialManager.h"
 #include "graphics/opengl/openglMaterialManager.h"
+#include "graphics/TextureManager.h"
+#include "graphics/opengl/openglTextureManager.h"
 
 void engineRootInit(prism::Platform platformInfo) {
     // depending on platform, managers can be initialized and attached to root here:
     // so far, only support windows
     // TODO: support linux, macos
 
-    std::unique_ptr<prism::FileManager> fileManager;
     std::unique_ptr<prism::WindowManager> windowManager;
     std::unique_ptr<prism::MeshManager> meshManager;
     std::unique_ptr<prism::MaterialManager> materialManager;
+    std::unique_ptr<prism::TextureManager> textureManager;
 
     // handle platform device first:
     switch (platformInfo.devicePlatform) {
         case prism::DevicePlatform::WINDOWS:
-            fileManager = std::make_unique<prism::FileManager>();
             windowManager = std::make_unique<prism::Win32WindowManager>(platformInfo);
             break;
         default:
-            prism::Logger::error("unspecified platform info.. could not initialize app");
-            throw prism::Exception("unspecified platform info.. could not initialize app");
-            break;
+            prism::Logger::error("engineRootInit", "unspecified platform info.. could not initialize app");
+            return;
     }
 
     // handle graphicsApi:
@@ -38,23 +38,23 @@ void engineRootInit(prism::Platform platformInfo) {
         case prism::GraphicsApi::OPENGL:
             meshManager = std::make_unique<prism::OpenglMeshManager>();
             materialManager = std::make_unique<prism::OpenglMaterialManager>();
+            textureManager = std::make_unique<prism::OpenGLTextureManager>();
             break;
         case prism::GraphicsApi::VULKAN:
             break;
         case prism::GraphicsApi::DIRECTX12:
             break;
         default:
-            prism::Logger::error("unspecified platform info.. could not initialize graphics api");
-            throw prism::Exception("unspecified platform info.. could not initialize app");
-            break;
+            prism::Logger::error("engineRootInit", "unspecified platform info.. could not initialize graphics api");
+            return;
     }
 
     prism::PrismRoot::registerGraphicsApi(
         platformInfo.graphicsApi,
-        std::move(fileManager),
         std::move(windowManager),
         std::move(meshManager),
-        std::move(materialManager));
+        std::move(materialManager),
+        std::move(textureManager));
 }
 
 namespace prism {
@@ -66,7 +66,7 @@ namespace prism {
 */
 void init(int argc, char **argv, std::function<void(int, char**)> func, Platform platformInfo) {
     Logger::turnOn();
-    Logger::info("PrismInit::initDebug", "Prism initialized with Debug.");
+    Logger::info("PrismInit::init", "Prism initialized with Debug.");
 
     engineRootInit(platformInfo);
 
@@ -79,7 +79,7 @@ void init(int argc, char **argv, std::function<void(int, char**)> func, Platform
     }
 
     Logger::turnOn();
-    Logger::info("PrismInit::initDebug", "Prism stopping...");
+    Logger::info("PrismInit::init", "Prism stopping...");
 
     PrismRoot::stop();
 }

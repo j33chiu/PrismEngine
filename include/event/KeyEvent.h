@@ -12,6 +12,7 @@ struct KeyEvent {
     KeyId key;
     EventState keyState;
 
+    static std::uint32_t keyListOffset;
     static std::vector<std::string> keyList;
 
     friend std::ostream &operator<<(std::ostream& stream, const KeyEvent& event) {
@@ -26,7 +27,7 @@ struct KeyEvent {
                 stream << "unknown event state(";
                 break;
         }
-        stream << keyList[(int)event.key];
+        stream << keyList[(int)event.key - keyListOffset];
         stream << ")";
 
         return stream;

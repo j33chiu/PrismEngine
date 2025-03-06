@@ -1,7 +1,11 @@
 #include "event/KeyEvent.h"
+#include "event/EventUtil.h"
 
 namespace prism {
 
+std::uint32_t KeyEvent::keyListOffset = (std::uint32_t)KeyId::NONE;
+
+// matches the enum class KeyId in EventUtil
 std::vector<std::string> KeyEvent::keyList = {
     "NONE",
     "UNKNWN",

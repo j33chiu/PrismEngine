@@ -7,7 +7,7 @@ namespace prism {
 
 OpenGLMesh::OpenGLMesh(std::unique_ptr<VertexContainer> vertexContainer, const std::vector<std::uint32_t>& indices, OpenglVAO* vao) 
     : Mesh(std::move(vertexContainer), indices)
-    , vbo(this->vertexContainer->getVerticesAddress(), this->vertexContainer->getDataSize())
+    , vbo(this->vertexContainer->getDataAddress(), this->vertexContainer->getDataSize())
     , ebo(indices.data(), indices.size() * sizeof(std::uint32_t))
     , vao(vao)
 {
@@ -17,7 +17,7 @@ OpenGLMesh::OpenGLMesh(std::unique_ptr<VertexContainer> vertexContainer, const s
 
 void OpenGLMesh::updateVertices(std::unique_ptr<VertexContainer> newVertexContainer) {
     // overwrites from beginning of buffer
-    vbo.write(newVertexContainer->getVerticesAddress(), newVertexContainer->getDataSize(), 0);
+    vbo.write(newVertexContainer->getDataAddress(), newVertexContainer->getDataSize(), 0);
     this->vertexContainer = std::move(newVertexContainer);
 }
 

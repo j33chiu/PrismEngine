@@ -8,28 +8,37 @@ target_sources(prism PRIVATE
 	${_INCL}/WindowManager.h
 
 	#render stuff
+	${_INCL}/GraphicsSettings.h
 	${_INCL}/PrimitiveType.h
 	${_INCL}/Renderer.h
 	${_INCL}/RenderPipeline.h
 	${_INCL}/RenderStep.h
+	${_INCL}/RenderTarget.h
+	${_INCL}/RenderTargetManager.h
+	${_INCL}/Texture.h
+	${_INCL}/TextureManager.h
+	${_INCL}/TextureSampler.h
 	${_INCL}/Scene.h
 	${_INCL}/RenderObject.h
-	${_INCL}/SingleRenderObject.h
-	${_INCL}/InstancedRenderObject.h
 	${_INCL}/Material.h
 	${_INCL}/MaterialManager.h
 	${_INCL}/Mesh.h
 	${_INCL}/MeshManager.h
 	${_INCL}/Vertex.h
 	${_INCL}/ShaderType.h
+	GraphicsSettings.cpp
 	Renderer.cpp
 	RenderPipeline.cpp
 	RenderStep.cpp
+	RenderTarget.cpp
+	RenderTargetManager.cpp
+	Texture.cpp
+	TextureManager.cpp
+	TextureSampler.cpp
 	Scene.cpp
 	RenderObject.cpp
-	SingleRenderObject.cpp
-	InstancedRenderObject.cpp
 	Mesh.cpp
 	MeshManager.cpp
+	Vertex.cpp
 	Window.cpp
 )

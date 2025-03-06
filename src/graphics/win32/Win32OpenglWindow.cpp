@@ -14,10 +14,10 @@
 #include "graphics/opengl/openglRenderer.h"
 
 // function pointers that need to be resolved
-using wglCreateContextAttribsARBFunc = HGLRC(HDC, HGLRC, const int *);
-using wglChoosePixelFormatARBFunc = BOOL(HDC, const int *, const FLOAT *, UINT, int *, UINT *);
-using wglSwapIntervalEXTFunc = BOOL(int);
-using glGetStringiFunc = GLubyte *(GLenum, GLuint);
+typedef HGLRC WINAPI wglCreateContextAttribsARBFunc(HDC, HGLRC, const int *);
+typedef BOOL WINAPI wglChoosePixelFormatARBFunc(HDC, const int *, const FLOAT *, UINT, int *, UINT *);
+typedef BOOL WINAPI wglSwapIntervalEXTFunc(int);
+typedef GLubyte * WINAPI glGetStringiFunc(GLenum, GLuint);
 
 wglCreateContextAttribsARBFunc *wglCreateContextAttribsARB;
 wglChoosePixelFormatARBFunc *wglChoosePixelFormatARB;
@@ -36,7 +36,7 @@ void resolveGlFunction(T &func, const std::string &name) {
     const auto funcAddress = wglGetProcAddress(name.c_str());
     if (funcAddress == NULL) {
         prism::Logger::error("Win32OpenglWindow::resolveWglFunctions", "could not resolve gl function" + name);
-        throw prism::Exception("Win32OpenglWindow: could not resolve gl function.");
+        prism::setGLFunctionSupported(name, false);
     }
     if(funcAddress == 0 ||
         (funcAddress == (void*)0x1) || (funcAddress == (void*)0x2) || (funcAddress == (void*)0x3) ||
@@ -48,6 +48,7 @@ void resolveGlFunction(T &func, const std::string &name) {
     } else {
         func = reinterpret_cast<T>(funcAddress);
     }
+    prism::setGLFunctionSupported(name, true);
 }
 
 bool initOpenGlExtensions(HINSTANCE instance) {
@@ -63,7 +64,7 @@ bool initOpenGlExtensions(HINSTANCE instance) {
             prism::Logger::warn("Win32OpenglWindow::Win32OpenglWindow", "dummy wc already exists, expected if more than 1 window created...");
         } else {
             prism::Logger::error("Win32OpenglWindow::Win32OpenglWindow", "could not register dummy wc.");
-            throw prism::Exception("Win32OpenglWindow: could not register dummy window class.");
+            return false;
         }
     } else {
         prism::Logger::info("Win32OpenglWindow::Win32OpenglWindow", "successfully registered dummy wc.");
@@ -91,7 +92,7 @@ bool initOpenGlExtensions(HINSTANCE instance) {
     if (!dummyHwnd) {
         prism::Logger::error("Win32OpenglWindow::Win32OpenglWindow", "could not create dummy window");
         DWORD err = GetLastError();
-        throw prism::Exception("Win32OpenglWindow: could not create dummy window.");
+        return false;
     } else {
         prism::Logger::info("Win32OpenglWindow::Win32OpenglWindow", "Successfully created dummy window.");
     }
@@ -105,7 +106,7 @@ bool initOpenGlExtensions(HINSTANCE instance) {
     }};
     if (!dummyHdc) {
         prism::Logger::error("Win32OpenglWindow::Win32OpenglWindow", "Unable to get dummy DC.");
-        throw prism::Exception("Win32OpenglWindow: Unable to get dummy DC.");
+        return false;
     } else {
         prism::Logger::info("Win32OpenglWindow::Win32OpenglWindow", "successfully got dummy DC.");
     }
@@ -133,11 +134,11 @@ bool initOpenGlExtensions(HINSTANCE instance) {
     int chosenPixelFormat = ChoosePixelFormat(dummyHdc, &pfd); 
     if (!chosenPixelFormat) {
         prism::Logger::error("Win32OpenglWindow::Win32OpenglWindow", "Unable to choose pixel format.");
-        throw prism::Exception("Win32OpenglWindow: Unable to choose pixel format.");
+        return false;
     }
     if (!SetPixelFormat(dummyHdc, chosenPixelFormat, &pfd)) {
         prism::Logger::error("Win32OpenglWindow::Win32OpenglWindow", "Unable to set pixel format.");
-        throw prism::Exception("Win32OpenglWindow: Unable to set pixel format.");
+        return false;
     }
     // gl context:
     AutoHGLRC dummyGlContext = {wglCreateContext(dummyHdc), 
@@ -152,7 +153,7 @@ bool initOpenGlExtensions(HINSTANCE instance) {
     // set current gl context:
     if (!wglMakeCurrent(dummyHdc, dummyGlContext)) {
         prism::Logger::error("Win32OpenglWindow::Win32OpenglWindow", "Unable to set current gl context.");
-        throw prism::Exception("Win32OpenglWindow: Unable to set current gl context.");
+        return false;
     }
     // resolve needed wgl functions for actual use
     resolveGlFunction(wglCreateContextAttribsARB, "wglCreateContextAttribsARB");
@@ -166,7 +167,62 @@ bool initOpenGlExtensions(HINSTANCE instance) {
     return true;
 }
 
-bool initActualOpenGl(HDC actualDc) {
+void resolveAllOpenGlFunctions() {
+    // depending on number of windows, this gets called more than once, so we can skip once all have already been resolved
+    if (prismResolvedGLFunctions) return;
+    LOOP_GL_DECL_FUNC(RESOLVE_FUNCTION);
+    prismResolvedGLFunctions = true;
+}
+
+}
+
+namespace prism {
+
+Win32OpenglWindow::Win32OpenglWindow(std::string windowName, std::uint32_t width, std::uint32_t height) 
+    : Win32Window(windowName, width, height)
+{
+    //https://stackoverflow.com/questions/45518843/initializing-opengl-without-libraries
+    
+
+    // resolve opengl extensions first with dummy window:
+    if (!initOpenGlExtensions(instance)) {
+        Logger::error("Win32OpenglWindow::Win32OpenglWindow", "Failed to resolve required wgl functions");
+    }
+    // can init openGL for real now:
+    if (!initActualOpenGL(hdc)) {
+        Logger::error("Win32OpenglWindow::Win32OpenglWindow", "Failed to initialize opengl");
+    }
+    // gl sanity check
+    GLint majVer = -1;
+    GLint minVer = -1;
+    glGetIntegerv(GL_MAJOR_VERSION, &majVer); 
+    glGetIntegerv(GL_MINOR_VERSION, &minVer);
+    if (majVer != PRISM_OPENGL_MAJOR_VERSION || minVer != PRISM_OPENGL_MINOR_VERSION) {
+        Logger::error("Win32OpenglWindow::Win32OpenglWindow", "Sanity check failed, unexpected openGL version...");
+    }   
+
+    // resolve the rest of the opengl functions required by the engine
+    resolveAllOpenGlFunctions();
+    
+    // set window renderer to openGL
+    renderer = std::make_unique<OpenGLRenderer>(width, height);
+}
+
+void Win32OpenglWindow::removeContext() {
+    if (!wglMakeCurrent(hdc, 0)) {
+        prism::Logger::error("Win32OpenglWindow::removeContext", "Unable to set current gl context to null");
+    }
+}
+
+void Win32OpenglWindow::setContext() {
+    // set context again (when this window needs to render in another thread that the one that created the window)
+    if (!wglMakeCurrent(hdc, glContext)) {
+        Logger::error("Win32OpenglWindow::setContext", "Failed to set current render context");
+    }
+}
+
+bool Win32OpenglWindow::initActualOpenGL(HDC actualDc) {
+    
     // assumes that initOpenGlExtensions successfully resolved wglChoosePixelFormatARB
 
 // https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_pixel_format.txt
@@ -198,15 +254,15 @@ bool initActualOpenGl(HDC actualDc) {
     UINT num_formats;
     wglChoosePixelFormatARB(actualDc, pixelFormatAttributes, 0, 1, &pixel_format, &num_formats);
     if (!num_formats) {
-        prism::Logger::error("Win32OpenglWindow::initActualOpenGl", "Failed to choose the window's pixel format");
-        throw prism::Exception("Win32OpenglWindow: Failed to choose the window's pixel format");
+        prism::Logger::error("Win32OpenglWindow::initActualOpenGL", "Failed to choose the window's pixel format");
+        return false;
     }
 
     PIXELFORMATDESCRIPTOR pfd;
     DescribePixelFormat(actualDc, pixel_format, sizeof(pfd), &pfd);
     if (!SetPixelFormat(actualDc, pixel_format, &pfd)) {
-        prism::Logger::error("Win32OpenglWindow::initActualOpenGl", "Failed to set the window's pixel format");
-        throw prism::Exception("Win32OpenglWindow: Failed to set the window's pixel format");
+        prism::Logger::error("Win32OpenglWindow::initActualOpenGL", "Failed to set the window's pixel format");
+        return false;
     }
 
 // https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
@@ -223,63 +279,29 @@ bool initActualOpenGl(HDC actualDc) {
         0,
     };
 
-    HGLRC glContext = wglCreateContextAttribsARB(actualDc, 0, openGLAttributes);
+    glContext = wglCreateContextAttribsARB(actualDc, 0, openGLAttributes);
     if (!glContext) {
-        prism::Logger::error("Win32OpenglWindow::initActualOpenGl", "Failed to create OpenGL context");
-        throw prism::Exception("Win32OpenglWindow: Failed to create OpenGL context");
+        prism::Logger::error("Win32OpenglWindow::initActualOpenGL", "Failed to create OpenGL context");
+        return false;
     }
 
     if (!wglMakeCurrent(actualDc, glContext)) {
-        prism::Logger::error("Win32OpenglWindow::initActualOpenGl", "Failed to set OpenGL context");
-        throw prism::Exception("Win32OpenglWindow: Failed to set OpenGL context");
+        prism::Logger::error("Win32OpenglWindow::initActualOpenGL", "Failed to set OpenGL context");
+        return false;
     }
+
+    // apply graphics settings
+    updateGraphicsSettings();
 
     return true;
 }
 
-void resolveAllOpenGlFunctions() {
-    // depending on number of windows, this gets called more than once, so we can skip once all have already been resolved
-    if (prismResolvedGLFunctions) return;
-
-    LOOP_GL_DECL_FUNC(RESOLVE_FUNCTION);
-    //resolveGlFunction(glBindBuffer, "glBindBuffer");
-    prismResolvedGLFunctions = true;
-}
-
-}
-
-
-namespace prism {
-
-Win32OpenglWindow::Win32OpenglWindow(std::string windowName, std::uint32_t width, std::uint32_t height) 
-    : Win32Window(windowName, width, height)
-{
-
-
-    // resolve opengl extensions first with dummy window:
-    if (!initOpenGlExtensions(instance)) {
-        Logger::error("Win32OpenglWindow::Win32OpenglWindow", "Failed to resolve required wgl functions");
-        throw Exception("Win32OpenglWindow: Failed to resolve required wgl functions");
-    }
-    // can init openGL for real now:
-    if (!initActualOpenGl(hdc)) {
-        Logger::error("Win32OpenglWindow::Win32OpenglWindow", "Failed to initialize opengl");
-        throw Exception("Win32OpenglWindow: Failed to initialize opengl");
-    }
-    // gl sanity check
-    GLint majVer = -1;
-    GLint minVer = -1;
-    glGetIntegerv(GL_MAJOR_VERSION, &majVer); 
-    glGetIntegerv(GL_MINOR_VERSION, &minVer);
-    if (majVer != PRISM_OPENGL_MAJOR_VERSION || minVer != PRISM_OPENGL_MINOR_VERSION) {
-        Logger::error("Win32OpenglWindow::Win32OpenglWindow", "Sanity check failed, unexpected openGL version...");
-    }   
-
-    // resolve the rest of the opengl functions required by the engine
-    resolveAllOpenGlFunctions();
+void Win32OpenglWindow::updateGraphicsSettings() {
+    // vsync
+    wglSwapIntervalEXT(graphicsSettings.isVsyncEnabled());
+    // TODO: antialiasing
     
-    // set window renderer to openGL
-    renderer = std::make_unique<OpenGLRenderer>(width, height);
+    glEnable(GL_MULTISAMPLE);
 }
 
 }

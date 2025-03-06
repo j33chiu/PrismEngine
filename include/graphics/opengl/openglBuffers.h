@@ -5,7 +5,7 @@
 
 #include "logger/Logger.h"
 #include "graphics/opengl/opengl.h"
-#include "graphics/Vertex.h"
+#include "core/Exception.h"
 
 namespace prism {
 
@@ -146,6 +146,11 @@ public:
         write(std::addressof(object), sizeof(T), 0);
     }
 
+    template<class U>
+    void overwriteVector(const std::vector<U> &objects) {
+        write(objects.data(), sizeof(U) * objects.size(), 0);
+    }
+
     template<class T>
     void write(const T &object, std::size_t offset) {
         write(std::addressof(object), sizeof(T), offset);
@@ -165,7 +170,8 @@ public:
     void write(const T *object, std::size_t size, std::size_t offset) {
         if (offset + size > bufferCapacity) {
             if constexpr (FixedCapacity) {
-                throw Exception("Attempting to write to buffer with insufficient capacity.");
+                Logger::error("Attempting to write to buffer with insufficient capacity.");
+                return;
             } 
             // create new buffer with increased capacity
             std::size_t newCapacity = max(offset + size, bufferCapacity * 3u);

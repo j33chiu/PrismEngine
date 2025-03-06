@@ -14,15 +14,17 @@ OpenglVAOFactory& OpenglVAOFactory::getInstance() {
     return vaoFactory;
 }
 
-OpenglVAO* OpenglVAOFactory::generateVAO(VertexDataAttributes vertexAttr) {
-    return getInstance().generateVAOImpl(vertexAttr);
+OpenglVAO* OpenglVAOFactory::generateVAO(const VertexDescriptor& vertexDescription) {
+    return getInstance().generateVAOImpl(vertexDescription);
 }
 
-OpenglVAO* OpenglVAOFactory::generateVAOImpl(VertexDataAttributes vertexAttr) {
-    if (vaoMap.find(vertexAttr.vertexDataId) == vaoMap.end()) {
-        vaoMap[vertexAttr.vertexDataId] = std::make_unique<OpenglVAO>(vertexAttr);
+OpenglVAO* OpenglVAOFactory::generateVAOImpl(const VertexDescriptor& vertexDescription) {
+    auto hasher = std::hash<prism::VertexDescriptor>();
+    std::size_t hash = hasher(vertexDescription);
+    if (vaoMap.find(hash) == vaoMap.end()) {
+        vaoMap[hash] = std::make_unique<OpenglVAO>(vertexDescription);
     }
-    return vaoMap[vertexAttr.vertexDataId].get();
+    return vaoMap[hash].get();
 }
 
 }

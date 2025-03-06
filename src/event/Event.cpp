@@ -34,6 +34,10 @@ Event::Event(MouseMoveEvent mouseMoveEvent)
     : event(mouseMoveEvent), eventType(EventType::MOUSE_MOVE)
 {}
 
+Event::Event(SizeEvent sizeEvent) 
+    : event(sizeEvent), eventType(EventType::SIZE)
+{}
+
 EventType Event::getEventType() const {
     return eventType;
 }
@@ -99,6 +103,15 @@ std::optional<MouseMoveEvent> Event::getMouseMoveEvent() const {
 
 bool Event::isMouseMoveEvent() const {
     return std::holds_alternative<MouseMoveEvent>(event);
+}
+
+std::optional<SizeEvent> Event::getSizeEvent() const {
+    if (isSizeEvent()) return std::get<SizeEvent>(event);
+    return {};
+}
+
+bool Event::isSizeEvent() const {
+    return std::holds_alternative<SizeEvent>(event);
 }
 
 

@@ -27,10 +27,15 @@
 #endif
 #include "graphics/opengl/openglDef.h"
 
+#include <unordered_map>
+
 namespace prism {
 
 void checkGLError();
 
 void checkGLError(std::string baseErrMsg);
+
+void setGLFunctionSupported(std::string function, bool isSupported);
+bool checkGLFunctionSupported(std::string function);
 
 }

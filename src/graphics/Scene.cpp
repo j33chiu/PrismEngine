@@ -10,7 +10,7 @@ Scene::Scene()
 
 RenderObject* Scene::addObject(const Material* material, std::unique_ptr<RenderObject> obj) {
     assert(material != nullptr);
-    // todo: if material is nullptr, use default material (if set by user)
+    // TODO: if material is nullptr, use default material (if set by user)
 
     objects.emplace_back(material, std::move(obj));
 
@@ -28,6 +28,16 @@ void Scene::removeObject(RenderObject* obj) {
     );
 }
 
+void Scene::removeObject(PrismId objectId) {
+    objects.erase(
+        std::remove_if(
+            std::begin(objects),
+            std::end(objects),
+            [objectId](const auto &o) {return std::get<1>(o).get()->getId() == objectId;}
+        ),
+        std::end(objects)
+    );
+}
 
 std::vector<std::tuple<const Material*, std::unique_ptr<RenderObject>>>& Scene::getObjects() {
     return objects;
@@ -35,6 +45,10 @@ std::vector<std::tuple<const Material*, std::unique_ptr<RenderObject>>>& Scene::
 
 const std::vector<std::tuple<const Material*, std::unique_ptr<RenderObject>>>& Scene::getObjects() const {
     return objects;
+}
+
+PrismId Scene::getId() const {
+    return sceneId;
 }
 
 }

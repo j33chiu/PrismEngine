@@ -3,6 +3,7 @@
 #include <ostream>
 #include <optional>
 #include <variant>
+#include <string>
 
 #include "ExitEvent.h"
 #include "FocusEvent.h"
@@ -11,6 +12,9 @@
 #include "MouseEvent.h"
 #include "MouseScrollEvent.h"
 #include "MouseMoveEvent.h"
+#include "SizeEvent.h"
+
+#include "util/PrismHash.h"
 
 namespace prism {
 
@@ -28,6 +32,7 @@ public:
     Event(MouseEvent mouseEvent);
     Event(MouseScrollEvent mouseScrollEvent);
     Event(MouseMoveEvent mouseMoveEvent);
+    Event(SizeEvent sizeEvent);
 
     EventType getEventType() const;
 
@@ -51,6 +56,9 @@ public:
 
     std::optional<MouseMoveEvent> getMouseMoveEvent() const;
     bool isMouseMoveEvent() const;
+
+    std::optional<SizeEvent> getSizeEvent() const;
+    bool isSizeEvent() const;
 
     friend std::ostream &operator<<(std::ostream& stream, const Event& event) {
         switch(event.getEventType()) {
@@ -78,13 +86,18 @@ public:
         case EventType::MOUSE_SCROLL:
             stream << "triggered MOUSE_SCROLL event.";
             if (event.getMouseScrollEvent().has_value())
-                stream <<  event.getMouseScrollEvent().value();
+                stream << event.getMouseScrollEvent().value();
             break;
         case EventType::MOUSE_MOVE:
             // LOTS of debug messages: commented out
             //stream << "triggered MOUSE_MOVE event.";
             //if (event.getMouseMoveEvent().has_value())
             //    stream << event.getMouseMoveEvent().value();
+            break;
+        case EventType::SIZE:
+            stream << "triggered window size event: ";
+            if (event.getSizeEvent().has_value())
+                stream << event.getSizeEvent().value();
             break;
         default:
             stream << "triggered UNKNOWN event.";
@@ -96,8 +109,53 @@ public:
 private:
     EventType eventType;
 
-    std::variant<ExitEvent, FocusEvent, KeyEvent, MouseButtonEvent, MouseEvent, MouseScrollEvent, MouseMoveEvent> event;
+    std::variant<ExitEvent, FocusEvent, KeyEvent, MouseButtonEvent, MouseEvent, MouseScrollEvent, MouseMoveEvent, SizeEvent> event;
 
+    
+
+};
+
+}
+
+namespace std {
+
+// override hash for prism::Event objects
+template<>
+struct hash<prism::Event> {
+    std::size_t operator()(const prism::Event& event) const {
+        std::size_t hashResult;
+        switch(event.getEventType()) {
+        case prism::EventType::KEY:
+            if (event.getKeyEvent().has_value())
+                hashResult = prism::hash(event.getEventType(), event.getKeyEvent().value().key, event.getKeyEvent().value().keyState);
+            else 
+                hashResult = prism::hash(event.getEventType());
+            break;
+        case prism::EventType::MOUSE_BUTTON:
+            if (event.getMouseButtonEvent().has_value())
+                hashResult = prism::hash(event.getEventType(), event.getMouseButtonEvent().value().buttonId, event.getMouseButtonEvent().value().state);
+            else
+                hashResult = prism::hash(event.getEventType());
+            break;
+        case prism::EventType::MOUSE_SCROLL:
+            if (event.getMouseScrollEvent().has_value())
+                hashResult = prism::hash(event.getEventType(), event.getMouseScrollEvent().value().state);
+            else 
+                hashResult = prism::hash(event.getEventType());
+            break;
+        case prism::EventType::EXIT:
+        case prism::EventType::FOCUS:
+        case prism::EventType::MOUSE:
+        case prism::EventType::MOUSE_MOVE:
+        case prism::EventType::SIZE:
+        case prism::EventType::NONE:
+        default:
+            hashResult = prism::hash(event.getEventType());
+            break;
+        }
+
+        return hashResult;
+    }
 };
 
 }

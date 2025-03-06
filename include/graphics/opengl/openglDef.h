@@ -7,7 +7,9 @@
 static bool prismResolvedGLFunctions = false;
 
 // required opengl defines for engine here:
+// see defines at https://github.com/pupil-labs/cygl/blob/master/win_glew/GL/glew.h
 #define GL_EXTENSIONS                               0x1F03
+#define GL_MULTISAMPLE                              0x809D
 #define GL_NUM_EXTENSIONS                           0x821D
 #define GL_MAJOR_VERSION                            0x821B
 #define GL_MINOR_VERSION                            0x821C
@@ -25,6 +27,17 @@ static bool prismResolvedGLFunctions = false;
 #define GL_COMPILE_STATUS                           0x8B81
 #define GL_LINK_STATUS                              0x8B82
 
+#define GL_MIRRORED_REPEAT                          0x8370                   
+#define GL_CLAMP_TO_EDGE                            0x812F
+#define GL_CLAMP_TO_BORDER                          0x812D
+#define GL_TEXTURE_WRAP_R                           0x8072
+#define GL_R8                                       0x8229
+#define GL_RG                                       0x8227
+#define GL_RG8                                      0x822B
+#define GL_RGB8                                     0x8051
+#define GL_TEXTURE_MAX_ANISOTROPY_EXT               0x84FE
+#define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT           0x84FF
+#define GL_MAX_TEXTURE_IMAGE_UNITS                  0x8872
 
 using GLsizeiptr = std::ptrdiff_t;
 using GLintptr = std::ptrdiff_t;
@@ -464,6 +477,22 @@ using GLuint64 = std::uint64_t;*/
     DO(void, glDrawElementsInstanced, GLenum, GLsizei, GLenum, const void *, GLsizei)                           \
     DO(void, glBindVertexBuffer, GLuint, GLuint, GLintptr, GLsizei)                                             \
     DO(void, glBindBuffer, GLenum, GLuint)                                                                      \
+    DO(void, glCreateTextures, GLenum, GLsizei, GLuint *)                                                       \
+    DO(void, glBindTextureUnit, GLuint, GLuint)                                                                 \
+    DO(void, glTextureParameteri, GLuint, GLenum, GLint)                                                        \
+    DO(void, glTextureParameterf, GLuint, GLenum, GLfloat)                                                      \
+    DO(void, glTextureParameterfv, GLuint, GLenum, const GLfloat *)                                             \
+    DO(void, glTextureStorage2D, GLuint, GLsizei, GLenum, GLsizei, GLsizei)                                     \
+    DO(void, glTextureSubImage2D, GLuint, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const void*)   \
+    DO(void, glGenerateTextureMipmap, GLuint)                                                                   \
+    DO(void, glCreateSamplers, GLsizei, GLuint *)                                                               \
+    DO(void, glSamplerParameteri, GLuint, GLenum, GLint)                                                        \
+    DO(void, glSamplerParameterf, GLuint, GLenum, GLfloat)                                                      \
+    DO(void, glSamplerParameterfv, GLuint, GLenum, const GLfloat *)                                             \
+    DO(void, glBindSampler, GLuint, GLuint)                                                                     \
+    DO(void, glDeleteSamplers, GLsizei, const GLuint *)                                                         \
+    DO(GLuint64, glGetTextureHandleARB, GLuint)                                                                 \
+    DO(GLuint64, glGetTextureSamplerHandleARB, GLuint, GLuint)                                                  \
     DO(GLuint, glCreateShader, GLenum)                                                                          \
     DO(void, glShaderSource, GLuint, GLsizei, const GLchar **, const GLint *)                                   \
     DO(void, glCompileShader, GLuint)                                                                           \
@@ -488,9 +517,13 @@ using GLuint64 = std::uint64_t;*/
 #endif
 
 // macro declaration of gl functions
-#define DECL_FUNC(RETURN, NAME, ...) EXTERN RETURN (*NAME)(__VA_ARGS__);  
+// example: typedef void WINAPI glDeleteBuffersFunc(GLsizei, const GLuint *);
+#define DECL_TYPEDEF_FUNC(RETURN, NAME, ...) typedef RETURN WINAPI NAME ## Func (__VA_ARGS__);
+// example: EXTERN glDeleteBuffersFunc (*glDeleteBuffers);
+#define DECL_FUNC(RETURN, NAME, ...) EXTERN NAME ## Func (*NAME);  
 
 #ifdef LOOP_GL_DECL_FUNC
+LOOP_GL_DECL_FUNC(DECL_TYPEDEF_FUNC);
 LOOP_GL_DECL_FUNC(DECL_FUNC);
 #else
 #error Unable to declare necessary GL functions

@@ -12,6 +12,8 @@
 #include <Windows.h>
 #include <cstdint>
 
+#define WM_USER_RELEASEDC (WM_USER + 1)     // custom releaseDC callback for thread
+
 namespace prism {
 
 class Win32Window : public Window {
@@ -27,11 +29,18 @@ public:
     void setCursorStyle() override;
     void showWindowCursor(bool shouldShow) override;
     std::optional<Event> pollWindow() override;
+    bool isKeyPressed(KeyId key) override;
+    bool isMousePressed(MouseButton mouseButton) override;
 
-
+    void setRenderThreadPriority() override;
     HDC getDeviceContext() const;
     std::uint32_t getDpi() const;
     std::uint32_t getScreenScale() const override;
+
+    LRESULT handleWindowsMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+    std::pair<int, int> getCursorPosition() override;
+    void setCursorPosition(int x, int y) override;
 
 protected:
     AutoHInstance instance;

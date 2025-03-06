@@ -13,3 +13,11 @@ add_test(AutoResourceTests AutoResourceTests)
 
 target_link_libraries(MathTests PUBLIC GTest::GTest PUBLIC prism)
 add_test(MathTests MathTests)
+
+
+add_executable(PrismIdTests "")
+target_sources(PrismIdTests PRIVATE
+    PrismIdTest.cpp
+)
+target_link_libraries(PrismIdTests PUBLIC GTest::GTest PUBLIC prism)
+add_test(PrismIdTests PrismIdTests)

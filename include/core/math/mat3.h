@@ -192,7 +192,7 @@ public:
         return *this;
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     mat<3, 3, T> &operator+=(A scalar) {
         data[0] += scalar;
         data[1] += scalar;
@@ -209,7 +209,7 @@ public:
         return *this;
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     mat<3, 3, T> &operator-=(A scalar) {
         data[0] -= scalar;
         data[1] -= scalar;
@@ -224,7 +224,7 @@ public:
         return (*this = *this * m);
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     mat<3, 3, T> &operator*=(A scalar) {
         data[0] *= scalar;
         data[1] *= scalar;
@@ -240,7 +240,7 @@ public:
         return *this;
     }
 
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     mat<3, 3, T> &operator/=(A scalar) {
         data[0] /= scalar;
         data[1] /= scalar;
@@ -292,7 +292,7 @@ public:
 
     // binary math operations
     // addition (+)
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     mat<3, 3, T> operator+(A a) {
         return mat<3, 3, T>(
 			data[0] + a,
@@ -311,7 +311,7 @@ public:
     }
 
     // subtraction (-)
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     mat<3, 3, T> operator-(A a) {
         return mat<3, 3, T>(
 			data[0] - a,
@@ -330,13 +330,21 @@ public:
     }
 
     // multiplication (*)
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     mat<3, 3, T> operator*(A a) {
         return mat<3, 3, T>(
 			data[0] * a,
 			data[1] * a,
             data[2] * a
 		);
+    }
+
+    template<typename A>
+    vec<3, T> operator*(vec<3, A> const& v) {
+        T a = dot(data[0], v);
+        T b = dot(data[1], v);
+        T c = dot(data[2], v);
+        return vec<3, T>(a, b, c);
     }
 
     template<typename A>
@@ -359,7 +367,7 @@ public:
     }
 
     // division (/)
-    template<typename A>
+    template<typename A, typename = std::enable_if_t<std::is_arithmetic<A>::value>>
     mat<3, 3, T> operator/(A a) {
         return mat<3, 3, T>(
 			data[0] / a,
